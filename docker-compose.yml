@@ -1,0 +1,139 @@
+networks:
+  omniscient:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+
+services:
+  # ─────────────────────────────────────────────────────────────────
+  # PostgreSQL 15 + pgvector
+  # ─────────────────────────────────────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: omniscient-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: omniscient
+      POSTGRES_USER: omniscient
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-omniscient_secret}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - omniscient
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U omniscient -d omniscient"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─────────────────────────────────────────────────────────────────
+  # Redis 7
+  # ─────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: omniscient-redis
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - omniscient
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ─────────────────────────────────────────────────────────────────
+  # Backend — FastAPI
+  # ─────────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: omniscient-backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://omniscient:${POSTGRES_PASSWORD:-omniscient_secret}@postgres:5432/omniscient
+      SYNC_DATABASE_URL: postgresql://omniscient:${POSTGRES_PASSWORD:-omniscient_secret}@postgres:5432/omniscient
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    networks:
+      - omniscient
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./backend:/app:cached
+
+  # ─────────────────────────────────────────────────────────────────
+  # Scheduler — Cron jobs
+  # ─────────────────────────────────────────────────────────────────
+  scheduler:
+    build:
+      context: ./scheduler
+      dockerfile: Dockerfile
+    container_name: omniscient-scheduler
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://omniscient:${POSTGRES_PASSWORD:-omniscient_secret}@postgres:5432/omniscient
+      REDIS_URL: redis://redis:6379/0
+      BACKEND_URL: http://backend:8000
+    networks:
+      - omniscient
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - ./scheduler:/app:cached
+
+  # ─────────────────────────────────────────────────────────────────
+  # Frontend — Next.js 14
+  # ─────────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: omniscient-frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_WS_URL: ws://localhost:8000
+      WATCHPACK_POLLING: "true"
+    ports:
+      - "3000:3000"
+    networks:
+      - omniscient
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    volumes:
+      - ./frontend:/app:cached
+      - /app/node_modules
+      - /app/.next
