@@ -165,8 +165,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <Zap size={16} className="text-white" />
             </div>
             <div>
-              <div className="text-[14px] font-bold tracking-tight text-white leading-none">OMNISCIENT</div>
-              <div className="text-[8px] tracking-[0.25em] uppercase leading-none mt-0.5" style={{ color: '#4a6a8a' }}>
+              <div className="text-[14px] font-bold tracking-tight leading-none" style={{ color: 'var(--t1)' }}>OMNISCIENT</div>
+              <div className="text-[8px] tracking-[0.25em] uppercase leading-none mt-0.5" style={{ color: 'var(--t3)' }}>
                 Opportunities Terminal
               </div>
             </div>
@@ -213,45 +213,46 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        {/* Navigation row */}
+        {/* Navigation row — centred */}
         {!isLoginPage && !isLandingPage && (
-          <div className="flex items-center gap-0.5 px-3 pb-1.5 overflow-x-auto"
-            style={{ borderTop: '1px solid var(--border-dim)' }}>
+          <div className="overflow-x-auto" style={{ borderTop: '1px solid var(--border-dim)', scrollbarWidth: 'none' }}>
+            <div className="flex items-center gap-0.5 px-3 pb-1.5 mx-auto w-fit">
 
-            {/* Primary: Opportunities — styled prominently */}
-            <Link href={NAV_PRIMARY.href}
-              className={cn(
-                'flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold transition-all whitespace-nowrap mr-2 border',
-                isPrimary ? 'text-white' : 'text-[#c4b5fd]'
-              )}
-              style={{
-                background:   isPrimary ? 'linear-gradient(135deg,#6d28d9,#7c3aed)' : 'rgba(124,58,237,0.1)',
-                borderColor:  isPrimary ? '#7c3aed' : 'rgba(124,58,237,0.35)',
-                boxShadow:    isPrimary ? '0 0 18px rgba(124,58,237,0.5)' : '0 0 8px rgba(124,58,237,0.15)',
-              }}>
-              <NAV_PRIMARY.icon size={13} />
-              {NAV_PRIMARY.label}
-            </Link>
+              {/* Primary: Opportunities — styled prominently */}
+              <Link href={NAV_PRIMARY.href}
+                className={cn(
+                  'flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold transition-all whitespace-nowrap mr-2 border',
+                  isPrimary ? 'text-white' : 'text-[#c4b5fd]'
+                )}
+                style={{
+                  background:   isPrimary ? 'linear-gradient(135deg,#6d28d9,#7c3aed)' : 'rgba(124,58,237,0.1)',
+                  borderColor:  isPrimary ? '#7c3aed' : 'rgba(124,58,237,0.35)',
+                  boxShadow:    isPrimary ? '0 0 18px rgba(124,58,237,0.5)' : '0 0 8px rgba(124,58,237,0.15)',
+                }}>
+                <NAV_PRIMARY.icon size={13} />
+                {NAV_PRIMARY.label}
+              </Link>
 
-            {/* Divider */}
-            <div className="w-px h-5 bg-[#1a3050] mr-1 flex-shrink-0" />
+              {/* Divider */}
+              <div className="w-px h-5 mr-1 flex-shrink-0" style={{ background: 'var(--border-default)' }} />
 
-            {/* Secondary items */}
-            {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-              const active = path?.startsWith(href)
-              return (
-                <Link key={href} href={href}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all whitespace-nowrap border"
-                  style={{
-                    color:       active ? 'var(--nav-active)'   : 'var(--nav-inactive)',
-                    background:  active ? 'var(--brand-dim)'    : 'transparent',
-                    borderColor: active ? 'rgba(124,58,237,0.3)': 'transparent',
-                  }}>
-                  <Icon size={12} />
-                  {label}
-                </Link>
-              )
-            })}
+              {/* Secondary items */}
+              {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+                const active = path?.startsWith(href)
+                return (
+                  <Link key={href} href={href}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all whitespace-nowrap border"
+                    style={{
+                      color:       active ? 'var(--nav-active)'   : 'var(--nav-inactive)',
+                      background:  active ? 'var(--brand-dim)'    : 'transparent',
+                      borderColor: active ? 'rgba(124,58,237,0.3)': 'transparent',
+                    }}>
+                    <Icon size={12} />
+                    {label}
+                  </Link>
+                )
+              })}
+            </div>
           </div>
         )}
       </header>
@@ -282,28 +283,30 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <div className="py-1.5 max-h-80 overflow-y-auto">
                 {searchResults.map(r => (
                   <button key={r.symbol} onClick={() => goToStock(r.symbol)}
-                    className="w-full flex items-center gap-3 px-5 py-3 hover:bg-[#0b1729] transition-colors text-left group">
+                    className="w-full flex items-center gap-3 px-5 py-3 transition-colors text-left group"
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-[13px] font-bold"
                       style={{ background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.25)', color: '#a78bfa' }}>
                       {r.symbol.charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-white text-[13px]">{r.symbol}</span>
+                        <span className="font-bold text-[13px]" style={{ color: 'var(--t1)' }}>{r.symbol}</span>
                         <span className="text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded"
-                          style={{ background: '#0b1729', border: '1px solid #1a3050', color: '#3d5a78' }}>{r.type}</span>
+                          style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-default)', color: 'var(--t3)' }}>{r.type}</span>
                       </div>
-                      <div className="text-[11px] truncate mt-0.5" style={{ color: '#3d5a78' }}>{r.name}</div>
+                      <div className="text-[11px] truncate mt-0.5" style={{ color: 'var(--t3)' }}>{r.name}</div>
                     </div>
-                    <ChevronRight size={13} style={{ color: '#3d5a78' }} className="flex-shrink-0 group-hover:text-brand transition-colors" />
+                    <ChevronRight size={13} style={{ color: 'var(--t3)' }} className="flex-shrink-0 group-hover:text-brand transition-colors" />
                   </button>
                 ))}
               </div>
             )}
 
             {searchQuery && !searching && !searchResults.length && (
-              <div className="px-5 py-10 text-center text-[12px]" style={{ color: '#3d5a78' }}>
-                No results for <span className="text-white">"{searchQuery}"</span>
+              <div className="px-5 py-10 text-center text-[12px]" style={{ color: 'var(--t3)' }}>
+                No results for <span style={{ color: 'var(--t1)' }}>"{searchQuery}"</span>
               </div>
             )}
 
@@ -314,7 +317,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   {['AAPL','NVDA','MSFT','RELIANCE.NS','HDFCBANK.NS','TCS.NS','INFY.NS','TSLA'].map(s => (
                     <button key={s} onClick={() => handleSearch(s)}
                       className="text-[11px] px-3 py-1.5 rounded-lg transition-all hover:border-brand"
-                      style={{ border: '1px solid #1a3050', background: '#0b1729', color: '#8faac5' }}>
+                      style={{ border: '1px solid var(--border-default)', background: 'var(--bg-raised)', color: 'var(--t2)' }}>
                       {s}
                     </button>
                   ))}

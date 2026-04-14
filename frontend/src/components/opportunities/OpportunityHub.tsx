@@ -88,67 +88,87 @@ function MarketPulseBar({ snapshot }: { snapshot: MarketSnapshot | undefined }) 
   const findQ = (sym: string) => all.find(q => q.symbol === sym)
 
   return (
-    <div className="rounded-xl px-4 py-2.5 flex items-center gap-4 flex-wrap"
-      style={{ background: '#070f1d', border: '1px solid #1a2235' }}>
+    /* Outer div scrolls on small screens; inner row is min-width natural and centred */
+    <div className="rounded-xl overflow-x-auto" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', scrollbarWidth: 'none' }}>
+      <div className="flex items-center justify-center gap-0 px-4 py-2.5 min-w-max mx-auto">
 
-      {/* Regime pill */}
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <Activity size={11} style={{ color: r.color }} />
-        <span className="text-[9px] text-muted uppercase tracking-wider">Regime</span>
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md"
-          style={{ color: r.color, background: r.bg, border: `1px solid ${r.color}40` }}>
-          {r.label}
-        </span>
-      </div>
-
-      <div className="w-px h-5 bg-[#1a2235] flex-shrink-0" />
-
-      {/* Breadth */}
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <TrendingUp size={10} style={{ color: '#00d68f' }} />
-        <span className="num text-[11px] font-bold" style={{ color: '#00d68f' }}>{adv}</span>
-        <span className="text-[8px] text-muted">adv</span>
-        <div className="w-16 h-1.5 rounded-full overflow-hidden bg-[#111d30]">
-          <div className="h-full rounded-full"
-            style={{ width: total > 0 ? `${(adv / total) * 100}%` : '50%', background: '#00d68f' }} />
+        {/* ── Regime pill ───────────────────────────── */}
+        <div className="flex items-center gap-2 pr-4">
+          <Activity size={13} style={{ color: r.color }} />
+          <span className="text-[11px] text-muted uppercase tracking-widest font-semibold">Regime</span>
+          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-md"
+            style={{ color: r.color, background: r.bg, border: `1px solid ${r.color}50` }}>
+            {r.label}
+          </span>
         </div>
-        <span className="text-[8px] text-muted">dec</span>
-        <span className="num text-[11px] font-bold" style={{ color: '#f0384f' }}>{dec}</span>
-        <TrendingDown size={10} style={{ color: '#f0384f' }} />
-      </div>
 
-      <div className="w-px h-5 bg-[#1a2235] flex-shrink-0" />
+        <div className="w-px h-6 mx-3 flex-shrink-0" style={{ background: 'var(--border-default)' }} />
 
-      {/* Key indices */}
-      <div className="flex items-center gap-3 overflow-x-auto flex-1" style={{ scrollbarWidth: 'none' }}>
-        {KEY_INDICES.map(({ sym, label, flag }) => {
-          const q = findQ(sym)
-          const price = q?.price ?? null
-          const chg = q?.change_pct ?? null
-          const up = chg !== null && chg > 0
-          const dn = chg !== null && chg < 0
-          return (
-            <div key={sym} className="flex items-center gap-1.5 flex-shrink-0">
-              <span className="text-xs">{flag}</span>
-              <span className="text-[9px] text-muted">{label}</span>
-              {price != null ? (
-                <span className="num text-[10px] font-semibold text-white">
-                  {price >= 10000
-                    ? price.toLocaleString('en-IN', { maximumFractionDigits: 0 })
-                    : price.toFixed(2)}
-                </span>
-              ) : <span className="text-[9px] text-muted">—</span>}
-              {chg != null && (
-                <span className="num text-[8px] font-bold flex items-center gap-0.5"
-                  style={{ color: up ? '#00d68f' : dn ? '#f0384f' : '#6b7c93' }}>
-                  {up ? <TrendingUp size={7} /> : dn ? <TrendingDown size={7} /> : <Minus size={7} />}
-                  {up ? '+' : ''}{chg.toFixed(2)}%
-                </span>
-              )}
-            </div>
-          )
-        })}
+        {/* ── Breadth bar ──────────────────────────── */}
+        <div className="flex items-center gap-2 px-1">
+          <TrendingUp size={12} style={{ color: 'var(--bull)' }} />
+          <span className="num text-[12px] font-bold" style={{ color: 'var(--bull)' }}>{adv}</span>
+          <span className="text-[11px] text-muted">adv</span>
+          <div className="w-20 h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg-raised)' }}>
+            <div className="h-full rounded-full transition-all duration-500"
+              style={{ width: total > 0 ? `${(adv / total) * 100}%` : '50%', background: 'var(--bull)' }} />
+          </div>
+          <span className="text-[11px] text-muted">dec</span>
+          <span className="num text-[12px] font-bold" style={{ color: 'var(--bear)' }}>{dec}</span>
+          <TrendingDown size={12} style={{ color: 'var(--bear)' }} />
+        </div>
+
+        <div className="w-px h-6 mx-3 flex-shrink-0" style={{ background: 'var(--border-default)' }} />
+
+        {/* ── Key indices — each index as a compact pill ── */}
+        <div className="flex items-center gap-5">
+          {KEY_INDICES.map(({ sym, label, flag }) => {
+            const q = findQ(sym)
+            const price = q?.price ?? null
+            const chg = q?.change_pct ?? null
+            const up = chg !== null && chg > 0
+            const dn = chg !== null && chg < 0
+            const clr = up ? 'var(--bull)' : dn ? 'var(--bear)' : 'var(--t3)'
+            return (
+              <div key={sym} className="flex flex-col items-center gap-0.5">
+                <div className="flex items-center gap-1">
+                  <span className="text-[12px] leading-none">{flag}</span>
+                  <span className="text-[11px] font-semibold" style={{ color: 'var(--t2)' }}>{label}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {price != null ? (
+                    <span className="num text-[12px] font-bold" style={{ color: 'var(--t1)' }}>
+                      {price >= 10000
+                        ? price.toLocaleString('en-IN', { maximumFractionDigits: 0 })
+                        : price.toFixed(2)}
+                    </span>
+                  ) : <span className="text-[11px] text-muted">—</span>}
+                  {chg != null && (
+                    <span className="num text-[11px] font-bold flex items-center gap-0.5" style={{ color: clr }}>
+                      {up ? <TrendingUp size={9} /> : dn ? <TrendingDown size={9} /> : <Minus size={9} />}
+                      {up ? '+' : ''}{chg.toFixed(2)}%
+                    </span>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </div>
+    </div>
+  )
+}
+
+// ── Filter group label + chips ─────────────────────────────────────
+
+function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] font-bold uppercase tracking-widest flex-shrink-0 opacity-70"
+        style={{ color: 'var(--t2)' }}>
+        {label}
+      </span>
+      <div className="flex items-center gap-1">{children}</div>
     </div>
   )
 }
@@ -161,11 +181,12 @@ function Chip({ active, onClick, color, children }: {
   const c = color || '#7c3aed'
   return (
     <button onClick={onClick}
-      className="text-[10px] px-2.5 py-1 rounded-lg font-medium transition-all whitespace-nowrap flex-shrink-0"
+      className="text-[12px] px-3 py-1 rounded-lg font-semibold transition-all whitespace-nowrap flex-shrink-0"
       style={{
-        background: active ? `${c}15` : 'transparent',
-        color:      active ? c : '#4b5d73',
-        border:     `1px solid ${active ? c + '55' : '#1a2235'}`,
+        background:  active ? `${c}18` : 'transparent',
+        color:       active ? c        : 'var(--t2)',
+        border:      active ? `1px solid ${c}55` : '1px solid var(--border-default)',
+        letterSpacing: '0.01em',
       }}>
       {children}
     </button>
@@ -187,57 +208,55 @@ function FilterBar({
 }) {
   const hasActive = region !== 'all' || horizonF !== 'ALL' || signalF !== 'ALL' || confF !== 'ALL'
   return (
-    <div className="rounded-xl px-4 py-2.5 flex items-center gap-3 flex-wrap"
-      style={{ background: '#070f1d', border: '1px solid #1a2235' }}>
+    <div className="rounded-xl overflow-x-auto" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', scrollbarWidth: 'none' }}>
+      <div className="flex items-center justify-center gap-2 px-4 py-2.5 min-w-max mx-auto">
 
-      {/* Region */}
-      <div className="flex items-center gap-1.5">
-        <span className="text-[8px] text-muted uppercase tracking-wider font-semibold mr-0.5">Region</span>
-        {REGION_FILTERS.map(f => (
-          <Chip key={f.id} active={region === f.id} onClick={() => setRegion(f.id)} color={f.color}>{f.label}</Chip>
-        ))}
+        {/* Region */}
+        <FilterGroup label="Region">
+          {REGION_FILTERS.map(f => (
+            <Chip key={f.id} active={region === f.id} onClick={() => setRegion(f.id)} color={f.color}>{f.label}</Chip>
+          ))}
+        </FilterGroup>
+
+        <div className="w-px h-6 mx-2 flex-shrink-0" style={{ background: 'var(--border-default)' }} />
+
+        {/* Horizon */}
+        <FilterGroup label="Horizon">
+          {HORIZON_FILTERS.map(f => (
+            <Chip key={f.id} active={horizonF === f.id} onClick={() => setHorizonF(f.id)}>{f.label}</Chip>
+          ))}
+        </FilterGroup>
+
+        <div className="w-px h-6 mx-2 flex-shrink-0" style={{ background: 'var(--border-default)' }} />
+
+        {/* Signal */}
+        <FilterGroup label="Signal">
+          {SIGNAL_FILTERS.map(f => (
+            <Chip key={f.id} active={signalF === f.id} onClick={() => setSignalF(f.id)} color="#00d68f">{f.label}</Chip>
+          ))}
+        </FilterGroup>
+
+        <div className="w-px h-6 mx-2 flex-shrink-0" style={{ background: 'var(--border-default)' }} />
+
+        {/* Confidence */}
+        <FilterGroup label="Confidence">
+          {CONF_FILTERS.map(f => (
+            <Chip key={f.id} active={confF === f.id} onClick={() => setConfF(f.id)} color="#00d68f">{f.label}</Chip>
+          ))}
+        </FilterGroup>
+
+        {hasActive && (
+          <>
+            <div className="w-px h-6 mx-2 flex-shrink-0" style={{ background: 'var(--border-default)' }} />
+            <button
+              onClick={() => { setRegion('all'); setHorizonF('ALL'); setSignalF('ALL'); setConfF('ALL') }}
+              className="text-[11px] font-semibold transition-colors flex-shrink-0"
+              style={{ color: 'var(--bear)' }}>
+              ✕ Clear filters
+            </button>
+          </>
+        )}
       </div>
-
-      <div className="w-px h-5 bg-[#1a2235]" />
-
-      {/* Horizon */}
-      <div className="flex items-center gap-1.5">
-        <span className="text-[8px] text-muted uppercase tracking-wider font-semibold mr-0.5">Horizon</span>
-        {HORIZON_FILTERS.map(f => (
-          <Chip key={f.id} active={horizonF === f.id} onClick={() => setHorizonF(f.id)}>{f.label}</Chip>
-        ))}
-      </div>
-
-      <div className="w-px h-5 bg-[#1a2235]" />
-
-      {/* Signal */}
-      <div className="flex items-center gap-1.5">
-        <span className="text-[8px] text-muted uppercase tracking-wider font-semibold mr-0.5">Signal</span>
-        {SIGNAL_FILTERS.map(f => (
-          <Chip key={f.id} active={signalF === f.id} onClick={() => setSignalF(f.id)} color="#00d68f">{f.label}</Chip>
-        ))}
-      </div>
-
-      <div className="w-px h-5 bg-[#1a2235]" />
-
-      {/* Confidence */}
-      <div className="flex items-center gap-1.5">
-        <span className="text-[8px] text-muted uppercase tracking-wider font-semibold mr-0.5">Confidence</span>
-        {CONF_FILTERS.map(f => (
-          <Chip key={f.id} active={confF === f.id} onClick={() => setConfF(f.id)} color="#00d68f">{f.label}</Chip>
-        ))}
-      </div>
-
-      {hasActive && (
-        <>
-          <div className="w-px h-5 bg-[#1a2235]" />
-          <button
-            onClick={() => { setRegion('all'); setHorizonF('ALL'); setSignalF('ALL'); setConfF('ALL') }}
-            className="text-[9px] text-muted hover:text-red-400 transition-colors flex-shrink-0">
-            ✕ Clear
-          </button>
-        </>
-      )}
     </div>
   )
 }
@@ -253,13 +272,13 @@ function StatsBar({ data }: { data: OpportunitiesResponse }) {
     { label: 'Universe',        value: data.universe,      color: '#6b7c93', icon: Database   },
   ]
   return (
-    <div className="grid grid-cols-5 gap-2">
+    <div className="grid grid-cols-5 gap-2.5">
       {items.map(({ label, value, color, icon: Icon }) => (
-        <div key={label} className="rounded-xl px-3 py-2.5 flex flex-col items-center gap-0.5"
-          style={{ background: `${color}08`, border: `1px solid ${color}20` }}>
-          <Icon size={11} style={{ color }} />
-          <div className="num text-[18px] font-bold leading-none" style={{ color }}>{value}</div>
-          <div className="text-[8px] text-muted text-center leading-tight">{label}</div>
+        <div key={label} className="rounded-xl px-4 py-3 flex flex-col items-center gap-1.5"
+          style={{ background: `${color}08`, border: `1px solid ${color}25` }}>
+          <Icon size={15} style={{ color }} />
+          <div className="num text-[22px] font-bold leading-none" style={{ color }}>{value}</div>
+          <div className="text-[11px] font-medium text-center" style={{ color: 'var(--t2)' }}>{label}</div>
         </div>
       ))}
     </div>
@@ -276,7 +295,7 @@ function SeedState({ onSeed, seeding }: { onSeed: () => void; seeding: boolean }
         <Database size={48} style={{ color: '#7c3aed' }} />
       </div>
       <div className="text-center max-w-lg">
-        <div className="text-[18px] font-bold text-white mb-2">Initialize the Analysis Engine</div>
+        <div className="text-[18px] font-bold mb-2" style={{ color: 'var(--t1)' }}>Initialize the Analysis Engine</div>
         <p className="text-[12px] text-text-secondary leading-relaxed">
           The system needs 6 months of historical price data to compute RSI, moving averages, Bollinger Bands,
           ATR, and all technical signals. This runs once and takes about 60 seconds.
@@ -361,39 +380,43 @@ export function OpportunityHub({ defaultRegion = 'all' }: Props) {
         confF={confF}       setConfF={setConfF}
       />
 
-      {/* ── Type tabs + sort + view (full-width) ──────────────── */}
-      <div className="flex items-center gap-2">
-        <div className="flex gap-1 overflow-x-auto flex-1" style={{ scrollbarWidth: 'none' }}>
+      {/* ── Type tabs + sort + view ────────────────────────────── */}
+      <div className="flex items-center gap-3 rounded-xl px-4 py-2" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)' }}>
+        {/* Type chips — centred, scrollable */}
+        <div className="flex gap-1.5 overflow-x-auto flex-1 justify-center" style={{ scrollbarWidth: 'none' }}>
           {TYPE_FILTERS.map(f => (
             <Chip key={f.id} active={typeF === f.id} onClick={() => setTypeF(f.id)} color={f.color}>
               {f.icon} {f.label}
             </Chip>
           ))}
         </div>
-        <div className="flex items-center gap-1.5 flex-shrink-0">
+
+        {/* Controls — right-aligned, flex-shrink-0 */}
+        <div className="flex items-center gap-2 flex-shrink-0 pl-2" style={{ borderLeft: '1px solid var(--border-default)' }}>
           <select value={sortBy} onChange={e => setSortBy(e.target.value)}
-            className="text-[9px] px-2 py-1.5 rounded-lg outline-none cursor-pointer"
-            style={{ background: '#0b1729', border: '1px solid #1a2235', color: '#8da3bf' }}>
+            className="text-[12px] px-2.5 py-1.5 rounded-lg outline-none cursor-pointer font-medium"
+            style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-default)', color: 'var(--t2)' }}>
             {SORT_OPTIONS.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
           </select>
 
-          <div className="flex p-0.5 rounded-lg gap-0.5" style={{ background: '#070f1d', border: '1px solid #1a2235' }}>
+          <div className="flex p-0.5 rounded-lg gap-0.5" style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-default)' }}>
             <button onClick={() => setView('grid')} title="Grid"
-              className="p-1.5 rounded-md transition-colors"
-              style={{ background: view === 'grid' ? '#1e3a5f' : 'transparent', color: view === 'grid' ? '#93c5fd' : '#4b5d73' }}>
-              <LayoutGrid size={12} />
+              className="p-1.5 rounded-md transition-all"
+              style={{ background: view === 'grid' ? 'var(--bg-active)' : 'transparent', color: view === 'grid' ? 'var(--info)' : 'var(--t3)' }}>
+              <LayoutGrid size={14} />
             </button>
             <button onClick={() => setView('row')} title="List"
-              className="p-1.5 rounded-md transition-colors"
-              style={{ background: view === 'row' ? '#1e3a5f' : 'transparent', color: view === 'row' ? '#93c5fd' : '#4b5d73' }}>
-              <List size={12} />
+              className="p-1.5 rounded-md transition-all"
+              style={{ background: view === 'row' ? 'var(--bg-active)' : 'transparent', color: view === 'row' ? 'var(--info)' : 'var(--t3)' }}>
+              <List size={14} />
             </button>
           </div>
 
           <button onClick={() => mutate()} disabled={isLoading}
-            className="p-1.5 rounded-lg transition-colors"
-            style={{ background: '#0b1729', border: '1px solid #1a2235', color: '#8da3bf' }}>
-            <RefreshCw size={12} className={isLoading ? 'animate-spin' : ''} />
+            className="p-1.5 rounded-lg transition-all"
+            title="Refresh"
+            style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-default)', color: 'var(--t2)' }}>
+            <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
           </button>
         </div>
       </div>
@@ -434,9 +457,9 @@ export function OpportunityHub({ defaultRegion = 'all' }: Props) {
           ))}
         </div>
       ) : (
-        <div className="rounded-xl overflow-hidden flex flex-col gap-0" style={{ border: '1px solid #1a2235' }}>
+        <div className="rounded-xl overflow-hidden flex flex-col gap-0" style={{ border: '1px solid var(--border-default)' }}>
           {filtered.map((item, i) => (
-            <div key={item.symbol} style={{ borderBottom: i < filtered.length - 1 ? '1px solid #0b1525' : 'none' }}>
+            <div key={item.symbol} style={{ borderBottom: i < filtered.length - 1 ? '1px solid var(--border-dim)' : 'none' }}>
               <OpportunityCard item={item} view="row" />
             </div>
           ))}
@@ -447,7 +470,7 @@ export function OpportunityHub({ defaultRegion = 'all' }: Props) {
       {hasData && !noMatches && (
         <div className="text-center text-[9px] text-muted py-2">
           Showing {filtered.length} of {data!.total_matched} opportunities · {data!.presets_run} scans run ·
-          Refreshes every 5 min · <span style={{ color: '#7c3aed' }}>Score ≥ 15</span>
+          Refreshes every 5 min · <span style={{ color: 'var(--brand)' }}>Score ≥ 15</span>
         </div>
       )}
     </div>

@@ -28,13 +28,26 @@ const sentimentColor = (s: string) => s === 'bullish' ? '#00d68f' : s === 'beari
 function CandlestickChart({ data, prediction }: { data: OHLCVBar[], prediction?: Prediction }) {
   const chartRef = useRef<HTMLDivElement>(null)
   const lcRef    = useRef<any>(null)
+  const roRef    = useRef<ResizeObserver | null>(null)
 
   useEffect(() => {
     if (!chartRef.current || !data.length) return
+
+    // Guard flag — flipped to true when this effect instance is cleaned up.
+    // Prevents the async .then() from acting on a disposed chart.
+    let cancelled = false
+
     import('lightweight-charts').then(({ createChart, CrosshairMode, CandlestickSeries, HistogramSeries, LineSeries }) => {
-      if (lcRef.current) lcRef.current.remove()
-      const chart = createChart(chartRef.current!, {
-        width:  chartRef.current!.clientWidth,
+      if (cancelled || !chartRef.current) return
+
+      // Safely remove any previous chart instance
+      if (lcRef.current) {
+        try { lcRef.current.remove() } catch { /* already disposed */ }
+        lcRef.current = null
+      }
+
+      const chart = createChart(chartRef.current, {
+        width:  chartRef.current.clientWidth,
         height: 320,
         layout: { background: { color: 'transparent' }, textColor: '#64748b' },
         grid:   { vertLines: { color: 'rgba(26,48,80,0.4)' }, horzLines: { color: 'rgba(26,48,80,0.4)' } },
@@ -89,13 +102,25 @@ function CandlestickChart({ data, prediction }: { data: OHLCVBar[], prediction?:
         predLine.setData([histPoint, ...predPoints])
       }
 
+      // ResizeObserver — stored in a ref so the outer cleanup can disconnect it
+      roRef.current?.disconnect()
       const ro = new ResizeObserver(() => {
-        if (chartRef.current) chart.applyOptions({ width: chartRef.current.clientWidth })
+        if (chartRef.current && !cancelled)
+          chart.applyOptions({ width: chartRef.current.clientWidth })
       })
-      ro.observe(chartRef.current!)
-      return () => { ro.disconnect() }
+      ro.observe(chartRef.current)
+      roRef.current = ro
     })
-    return () => { lcRef.current?.remove() }
+
+    return () => {
+      cancelled = true
+      roRef.current?.disconnect()
+      roRef.current = null
+      if (lcRef.current) {
+        try { lcRef.current.remove() } catch { /* already disposed */ }
+        lcRef.current = null
+      }
+    }
   }, [data, prediction])
 
   return <div ref={chartRef} className="w-full" />
