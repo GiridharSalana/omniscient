@@ -249,16 +249,31 @@ export interface OpportunityItem {
   change_pct:        number | null
   volume_ratio:      number | null
   rsi_14:            number | null
+  macd_hist:         number | null
+  bb_pct:            number | null
+  bb_squeeze:        boolean
+  atr_14:            number | null
+  week_52_high:      number | null
+  week_52_low:       number | null
+  pct_from_52w_high: number | null
   overall:           string
   trend_signal:      string
   ma_cross:          string
-  pct_from_52w_high: number | null
+  entry_price:       number | null
+  stop_loss:         number | null
+  target_price:      number | null
+  risk_reward:       number | null
+  sparkline:         number[]
   opportunity_score: number
+  opportunity_type:  'BREAKOUT' | 'REVERSAL' | 'TREND' | 'GOLDEN_CROSS' | 'VOLUME' | 'SQUEEZE' | 'SIGNAL'
+  time_horizon:      'INTRADAY' | 'SWING' | 'POSITIONAL'
+  confidence:        'HIGH' | 'MEDIUM' | 'LOW'
   matched_presets:   string[]
   match_reasons:     string[]
   preset_icons:      string[]
   primary_preset:    string
   primary_color:     string
+  why:               string
   data_source:       string
 }
 
@@ -267,6 +282,9 @@ export interface OpportunitiesResponse {
   universe:      number
   total_matched: number
   presets_run:   number
+  high_conf:     number
+  breakouts:     number
+  reversals:     number
   as_of:         string
 }
 

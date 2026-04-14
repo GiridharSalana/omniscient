@@ -62,7 +62,7 @@ export default function HomePage() {
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && user) router.replace('/dashboard')
+    if (!loading && user) router.replace('/opportunities')
   }, [user, loading, router])
 
   if (loading || user) return null  // Brief flash prevention
