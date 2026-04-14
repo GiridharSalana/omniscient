@@ -357,8 +357,8 @@ async def stock_technical(symbol: str, db: AsyncSession = Depends(get_db)):
     low_52    = min(closes[-252:] if len(closes) >= 252 else closes)
 
     rsi_sig   = classify_rsi(rsi)
-    trend     = classify_trend(price, sma_20, sma_50, sma_200)
-    ma_cross  = classify_ma_cross(sma_20, sma_50, sma_200, closes)
+    trend     = classify_trend(price, sma_20, sma_50)
+    ma_cross  = classify_ma_cross(sma_50, sma_200)
     avg_vol   = sum(volumes[-20:]) / max(len(volumes[-20:]), 1) if volumes else 1
     vol_ratio = volumes[-1] / avg_vol if volumes and avg_vol > 0 else 1.0
     vol_sig   = classify_volume(vol_ratio)

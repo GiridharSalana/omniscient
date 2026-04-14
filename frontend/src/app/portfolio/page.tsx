@@ -100,6 +100,7 @@ function PositionSizer() {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
+        {/* Left column: Capital + Risk% */}
         <div className="space-y-2">
           <label className="text-[9px] text-muted uppercase tracking-wider block">Capital (₹)</label>
           <input type="number" className="input" placeholder="500000"
@@ -115,12 +116,9 @@ function PositionSizer() {
               </button>
             ))}
           </div>
-
-          <label className="text-[9px] text-muted uppercase tracking-wider block">Entry Price</label>
-          <input type="number" className="input" placeholder="1500.00"
-            value={entry} onChange={e => setEntry(e.target.value)} />
         </div>
 
+        {/* Right column: Stop Loss + Target */}
         <div className="space-y-2">
           <label className="text-[9px] text-muted uppercase tracking-wider block">Stop Loss</label>
           <input type="number" className="input" placeholder="1450.00"
@@ -129,6 +127,21 @@ function PositionSizer() {
           <label className="text-[9px] text-muted uppercase tracking-wider block">Target (optional)</label>
           <input type="number" className="input" placeholder="1620.00"
             value={target} onChange={e => setTarget(e.target.value)} />
+        </div>
+      </div>
+
+      {/* Entry Price — full-width, centred below both columns */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <label className="text-[9px] text-muted uppercase tracking-wider block">Entry Price</label>
+          <input type="number" className="input" placeholder="1500.00"
+            value={entry} onChange={e => setEntry(e.target.value)} />
+        </div>
+        <div className="flex items-end pb-0.5">
+          <p className="text-[9px] text-muted leading-relaxed">
+            Position size is calculated as:<br />
+            <span className="text-text-secondary">Risk ÷ |Entry − Stop| = Shares</span>
+          </p>
         </div>
       </div>
 

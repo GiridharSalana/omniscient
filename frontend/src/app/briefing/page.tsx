@@ -63,8 +63,8 @@ export default function BriefingPage() {
         </div>
       )}
 
-      {/* ── Two-column: Briefing content (wider) | History (narrow) */}
-      <div className="grid grid-cols-[2fr_1fr] gap-2 items-start">
+      {/* ── Two-column: balanced 60/40 split ──────────────────── */}
+      <div className="grid grid-cols-[3fr_2fr] gap-2 items-start">
 
         {/* Left: Full briefing */}
         <div className="card space-y-2">

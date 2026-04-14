@@ -31,7 +31,7 @@ function CandlestickChart({ data, prediction }: { data: OHLCVBar[], prediction?:
 
   useEffect(() => {
     if (!chartRef.current || !data.length) return
-    import('lightweight-charts').then(({ createChart, CrosshairMode }) => {
+    import('lightweight-charts').then(({ createChart, CrosshairMode, CandlestickSeries, HistogramSeries, LineSeries }) => {
       if (lcRef.current) lcRef.current.remove()
       const chart = createChart(chartRef.current!, {
         width:  chartRef.current!.clientWidth,
@@ -44,7 +44,7 @@ function CandlestickChart({ data, prediction }: { data: OHLCVBar[], prediction?:
       })
       lcRef.current = chart
 
-      const candles = chart.addCandlestickSeries({
+      const candles = chart.addSeries(CandlestickSeries, {
         upColor: '#00d68f', downColor: '#ff4d6d',
         borderUpColor: '#00d68f', borderDownColor: '#ff4d6d',
         wickUpColor: '#00d68f', wickDownColor: '#ff4d6d',
@@ -55,7 +55,7 @@ function CandlestickChart({ data, prediction }: { data: OHLCVBar[], prediction?:
       })))
 
       // Volume bars
-      const volSeries = chart.addHistogramSeries({
+      const volSeries = chart.addSeries(HistogramSeries, {
         color: 'rgba(99,102,241,0.25)',
         priceFormat: { type: 'volume' },
         priceScaleId: 'volume',
@@ -73,13 +73,13 @@ function CandlestickChart({ data, prediction }: { data: OHLCVBar[], prediction?:
           time: b.date as any,
           value: closes.slice(i, i + 20).reduce((a, v) => a + v, 0) / 20,
         }))
-        const smaSeries = chart.addLineSeries({ color: '#f59e0b', lineWidth: 1, priceLineVisible: false })
+        const smaSeries = chart.addSeries(LineSeries, { color: '#f59e0b', lineWidth: 1, priceLineVisible: false })
         smaSeries.setData(smaData)
       }
 
       // Prediction line
       if (prediction?.forecast?.length) {
-        const predLine = chart.addLineSeries({
+        const predLine = chart.addSeries(LineSeries, {
           color: '#a78bfa', lineWidth: 2, lineStyle: 2,
           title: `Prophet ${prediction.forecast.length}d`,
         })

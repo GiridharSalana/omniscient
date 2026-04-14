@@ -231,12 +231,13 @@ export default function ScreenerPage() {
             <button key={p.id} onClick={() => setPreset(p.id)}
               className="flex flex-col items-center text-center p-3 rounded-xl transition-all hover:scale-[1.04] active:scale-100"
               style={{
-                background: active ? p.accent : 'rgba(7,15,29,0.8)',
-                border:     `1px solid ${active ? p.color + '70' : '#1a2235'}`,
+                background: active ? p.accent : 'var(--bg-raised)',
+                border:     `1px solid ${active ? p.color + '70' : 'var(--border-default)'}`,
                 boxShadow:  active ? `0 0 18px ${p.color}20, inset 0 1px 0 ${p.color}15` : 'none',
               }}>
               <span className="text-2xl mb-1 leading-none">{p.icon}</span>
-              <span className="text-[10px] font-bold leading-tight" style={{ color: active ? p.color : '#8da3bf' }}>
+              <span className="text-[10px] font-bold leading-tight"
+                style={{ color: active ? p.color : 'var(--t2)' }}>
                 {p.label}
               </span>
               <span className="text-[8px] text-muted mt-0.5 leading-tight hidden lg:block">{p.desc}</span>
@@ -318,11 +319,11 @@ export default function ScreenerPage() {
       ) : (
 
         /* Table view */
-        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #1a2235' }}>
+        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border-default)' }}>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr style={{ background: 'rgba(5,9,26,0.95)', borderBottom: '1px solid #1a2235' }}>
+                <tr style={{ background: 'var(--bg-raised)', borderBottom: '1px solid var(--border-default)' }}>
                   {['#', 'Symbol', 'Price', '1D %', 'Vol Ratio', 'RSI', 'Trend', 'MA Cross', 'Signal', 'Why'].map((h, i) => (
                     <th key={h} className={cn(
                       'text-[9px] text-muted uppercase tracking-wider px-3 py-2.5 font-semibold',
@@ -339,7 +340,10 @@ export default function ScreenerPage() {
                   return (
                     <tr key={r.symbol}
                       onClick={() => router.push(`/stock/${r.symbol}`)}
-                      className="border-b border-[#0f1e35] hover:bg-[#0a1628] transition-colors cursor-pointer group">
+                      className="transition-colors cursor-pointer group"
+                      style={{ borderBottom: '1px solid var(--border-dim)' }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
 
                       <td className="px-3 py-2.5 text-center">
                         <span className="text-[9px] text-muted">{i + 1}</span>
@@ -371,7 +375,7 @@ export default function ScreenerPage() {
                       <td className="px-3 py-2.5">
                         {r.volume_ratio != null ? (
                           <span className="num text-[10px] font-semibold"
-                            style={{ color: r.volume_ratio >= 2.5 ? '#f59e0b' : r.volume_ratio >= 1.5 ? '#06b6d4' : '#6b7c93' }}>
+                            style={{ color: r.volume_ratio >= 2.5 ? 'var(--warn)' : r.volume_ratio >= 1.5 ? 'var(--info)' : 'var(--t3)' }}>
                             {r.volume_ratio.toFixed(1)}×
                           </span>
                         ) : <span className="text-muted text-[9px]">—</span>}

@@ -82,7 +82,7 @@ function ScoreBar({ score }: { score: number }) {
   const color = score >= 70 ? '#00d68f' : score >= 50 ? '#fbbf24' : '#f0384f'
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-[#111d30]">
+      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-raised)' }}>
         <div className="h-full rounded-full transition-all duration-500"
           style={{ width: `${score}%`, background: `linear-gradient(90deg, ${color}88, ${color})` }} />
       </div>
@@ -126,8 +126,10 @@ export function OpportunityCard({ item, view = 'card' }: Props) {
   if (view === 'row') {
     return (
       <div onClick={() => router.push(`/stock/${item.symbol}`)}
-        className="group flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all hover:bg-[#0b1729]"
-        style={{ border: '1px solid #111d30' }}>
+        className="group flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all"
+        style={{ border: '1px solid var(--border-dim)' }}
+        onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
 
         {/* Score */}
         <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -141,7 +143,7 @@ export function OpportunityCard({ item, view = 'card' }: Props) {
         <div className="w-32 flex-shrink-0">
           <div className="flex items-center gap-1.5">
             <span className="text-xs">{regionFlag}</span>
-            <span className="font-bold text-white text-[12px]">{item.symbol.replace('.NS', '')}</span>
+            <span className="font-bold text-[12px]" style={{ color: 'var(--t1)' }}>{item.symbol.replace('.NS', '')}</span>
           </div>
           {item.name && <div className="text-[8px] text-muted truncate max-w-[120px]">{item.name}</div>}
         </div>
@@ -156,7 +158,7 @@ export function OpportunityCard({ item, view = 'card' }: Props) {
 
         {/* Price + change */}
         <div className="flex items-baseline gap-2 flex-shrink-0">
-          <span className="num text-[13px] font-bold text-white">{fmtPrice(item.price)}</span>
+          <span className="num text-[13px] font-bold" style={{ color: 'var(--t1)' }}>{fmtPrice(item.price)}</span>
           {item.change_pct != null && (
             <span className="num text-[11px] font-bold flex items-center gap-0.5"
               style={{ color: up ? '#00d68f' : '#f0384f' }}>
@@ -221,9 +223,8 @@ export function OpportunityCard({ item, view = 'card' }: Props) {
     <div onClick={() => router.push(`/stock/${item.symbol}`)}
       className="group relative rounded-xl cursor-pointer flex flex-col overflow-hidden transition-all duration-200"
       style={{
-        background: 'linear-gradient(160deg, #080f1f 0%, #050912 100%)',
-        border: `1px solid ${typeCfg.color}28`,
-        boxShadow: `0 4px 24px rgba(0,0,0,0.5)`,
+        background: 'var(--bg-card)',
+        border: `1px solid ${typeCfg.color}30`,
       }}>
 
       {/* Top accent + hover glow */}
@@ -240,7 +241,7 @@ export function OpportunityCard({ item, view = 'card' }: Props) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
               <span className="text-sm leading-none">{regionFlag}</span>
-              <span className="font-bold text-white text-[15px] leading-none tracking-tight">
+              <span className="font-bold text-[15px] leading-none tracking-tight" style={{ color: 'var(--t1)' }}>
                 {item.symbol.replace('.NS', '')}
               </span>
               {item.bb_squeeze && (
@@ -288,7 +289,7 @@ export function OpportunityCard({ item, view = 'card' }: Props) {
 
         {/* Row 3: Price + Change */}
         <div className="flex items-baseline gap-2">
-          <span className="num text-[20px] font-bold leading-none text-white">
+          <span className="num text-[20px] font-bold leading-none" style={{ color: 'var(--t1)' }}>
             {fmtPrice(item.price)}
           </span>
           {item.change_pct != null && (
@@ -319,7 +320,7 @@ export function OpportunityCard({ item, view = 'card' }: Props) {
                 </span>
               )}
             </div>
-            <div className="h-1 rounded-full bg-[#111d30] overflow-hidden">
+            <div className="h-1 rounded-full overflow-hidden" style={{ background: 'var(--bg-raised)' }}>
               {item.rsi_14 != null && (
                 <div className="h-full rounded-full"
                   style={{
@@ -351,7 +352,7 @@ export function OpportunityCard({ item, view = 'card' }: Props) {
                 const color = ratio >= 2.5 ? '#f59e0b' : ratio >= 1.5 ? '#06b6d4' : '#3d5a78'
                 return (
                   <div key={i} className="flex-1 rounded-sm"
-                    style={{ height: `${(i / 5) * 100}%`, background: filled ? color : '#111d30' }} />
+                    style={{ height: `${(i / 5) * 100}%`, background: filled ? color : 'var(--bg-raised)' }} />
                 )
               })}
             </div>
@@ -363,29 +364,29 @@ export function OpportunityCard({ item, view = 'card' }: Props) {
 
         {/* Row 6: Entry / Stop / Target */}
         {(item.entry_price || item.stop_loss || item.target_price) && (
-          <div className="rounded-lg overflow-hidden" style={{ border: '1px solid #0f1e35' }}>
+          <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-dim)' }}>
             <div className="grid grid-cols-3">
               <div className="flex flex-col items-center py-1.5 px-1"
-                style={{ background: 'rgba(6,182,212,0.05)', borderRight: '1px solid #0f1e35' }}>
+                style={{ background: 'rgba(6,182,212,0.06)', borderRight: '1px solid var(--border-dim)' }}>
                 <span className="text-[7px] text-muted uppercase tracking-wide">Entry</span>
-                <span className="num text-[10px] font-bold text-[#06b6d4] mt-0.5">{fmtPrice(item.entry_price)}</span>
+                <span className="num text-[10px] font-bold mt-0.5" style={{ color: 'var(--info)' }}>{fmtPrice(item.entry_price)}</span>
               </div>
               <div className="flex flex-col items-center py-1.5 px-1"
-                style={{ background: 'rgba(240,56,79,0.05)', borderRight: '1px solid #0f1e35' }}>
+                style={{ background: 'rgba(240,56,79,0.06)', borderRight: '1px solid var(--border-dim)' }}>
                 <span className="text-[7px] text-muted uppercase tracking-wide">Stop</span>
-                <span className="num text-[10px] font-bold text-[#f0384f] mt-0.5">{fmtPrice(item.stop_loss)}</span>
+                <span className="num text-[10px] font-bold mt-0.5" style={{ color: 'var(--bear)' }}>{fmtPrice(item.stop_loss)}</span>
               </div>
               <div className="flex flex-col items-center py-1.5 px-1"
-                style={{ background: 'rgba(0,214,143,0.05)' }}>
+                style={{ background: 'rgba(5,217,139,0.06)' }}>
                 <span className="text-[7px] text-muted uppercase tracking-wide">Target</span>
-                <span className="num text-[10px] font-bold text-[#00d68f] mt-0.5">{fmtPrice(item.target_price)}</span>
+                <span className="num text-[10px] font-bold mt-0.5" style={{ color: 'var(--bull)' }}>{fmtPrice(item.target_price)}</span>
               </div>
             </div>
             {item.risk_reward != null && (
-              <div className="text-center py-0.5" style={{ background: '#060d1c', borderTop: '1px solid #0f1e35' }}>
+              <div className="text-center py-0.5" style={{ background: 'var(--bg-raised)', borderTop: '1px solid var(--border-dim)' }}>
                 <span className="text-[7px] text-muted">R:R = </span>
                 <span className="num text-[8px] font-bold"
-                  style={{ color: item.risk_reward >= 2 ? '#00d68f' : '#fbbf24' }}>
+                  style={{ color: item.risk_reward >= 2 ? 'var(--bull)' : 'var(--warn)' }}>
                   1:{item.risk_reward.toFixed(1)}
                 </span>
               </div>
@@ -394,7 +395,7 @@ export function OpportunityCard({ item, view = 'card' }: Props) {
         )}
 
         {/* Row 7: Why / Confidence */}
-        <div className="flex flex-col gap-1 mt-auto pt-2" style={{ borderTop: '1px solid #0f1e35' }}>
+        <div className="flex flex-col gap-1 mt-auto pt-2" style={{ borderTop: '1px solid var(--border-dim)' }}>
           {item.why && (
             <div className="text-[8px] text-text-secondary leading-tight">{item.why}</div>
           )}

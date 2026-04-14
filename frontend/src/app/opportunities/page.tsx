@@ -13,7 +13,7 @@ export default function OpportunitiesPage() {
       {/* ── Page header ────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="flex items-center gap-2.5 text-[20px] font-bold text-white leading-none">
+          <h1 className="flex items-center gap-2.5 text-[20px] font-bold leading-none" style={{ color: 'var(--t1)' }}>
             <span className="w-7 h-7 rounded-lg flex items-center justify-center"
               style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.4)' }}>
               <Target size={15} style={{ color: '#a78bfa' }} />
