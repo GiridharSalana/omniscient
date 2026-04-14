@@ -733,40 +733,40 @@
    Numbers (.num) get +1px extra because mono fonts read lighter.
    ════════════════════════════════════════════════════════════ */
 
-/* ── Minimum size floor ──────────────────────────────────────── */
-.text-\[7px\]  { font-size: 11px; line-height: 1.55; letter-spacing: 0.025em; }
-.text-\[8px\]  { font-size: 11px; line-height: 1.55; }
-.text-\[9px\]  { font-size: 11px; line-height: 1.5;  }
-.text-\[10px\] { font-size: 12px; line-height: 1.5;  }
-.text-\[11px\] { font-size: 12px; line-height: 1.45; }
-.text-\[12px\] { font-size: 13px; line-height: 1.45; }
-.text-\[13px\] { font-size: 13px; line-height: 1.4;  }
+/* ── Minimum size floor ─────────────────────────────────────────
+   !important is required: Tailwind v4 + Turbopack append utility
+   CSS after globals.css in the final bundle, so without it the
+   Tailwind-generated font-size: 7px wins the cascade.          */
+.text-\[7px\]  { font-size: 11px !important; line-height: 1.55 !important; letter-spacing: 0.02em !important; }
+.text-\[8px\]  { font-size: 11px !important; line-height: 1.55 !important; }
+.text-\[9px\]  { font-size: 11px !important; line-height: 1.5  !important; }
+.text-\[10px\] { font-size: 12px !important; line-height: 1.5  !important; }
+.text-\[11px\] { font-size: 12px !important; line-height: 1.45 !important; }
+.text-\[12px\] { font-size: 13px !important; line-height: 1.45 !important; }
+.text-\[13px\] { font-size: 13px !important; line-height: 1.4  !important; }
+.text-\[14px\] { font-size: 14px !important; }
+.text-\[15px\] { font-size: 15px !important; }
+.text-\[18px\] { font-size: 18px !important; }
+.text-\[20px\] { font-size: 20px !important; }
+.text-\[22px\] { font-size: 22px !important; }
 
-/* ── Slightly larger common body sizes ───────────────────────── */
-.text-\[14px\] { font-size: 14px; }
-.text-\[15px\] { font-size: 15px; }
-.text-\[18px\] { font-size: 18px; }
-.text-\[20px\] { font-size: 20px; }
-.text-\[22px\] { font-size: 22px; }
+/* ── .num (monospace) gets +1px for optical balance ────────── */
+.num.text-\[9px\],  .num.text-\[10px\] { font-size: 12px !important; }
+.num.text-\[11px\], .num.text-\[12px\] { font-size: 13px !important; }
+.num.text-\[13px\], .num.text-\[14px\] { font-size: 14px !important; }
+.num.text-\[18px\]                     { font-size: 19px !important; }
+.num.text-\[20px\]                     { font-size: 21px !important; }
+.num.text-\[22px\]                     { font-size: 23px !important; }
 
-/* ── Monospace numbers: slightly larger for optical balance ───── */
-.num.text-\[9px\],  .num.text-\[10px\] { font-size: 12px; }
-.num.text-\[11px\], .num.text-\[12px\] { font-size: 13px; }
-.num.text-\[13px\]                     { font-size: 14px; }
-.num.text-\[14px\]                     { font-size: 14px; }
-.num.text-\[18px\]                     { font-size: 19px; }
-.num.text-\[20px\]                     { font-size: 21px; }
-.num.text-\[22px\]                     { font-size: 23px; }
-
-/* ── Small text needs more font-weight to stay readable ─────── */
+/* ── Small text: medium weight makes it legible ─────────────── */
 .text-\[7px\], .text-\[8px\], .text-\[9px\], .text-\[10px\] {
-  font-weight: 500;   /* medium instead of regular for micro text */
+  font-weight: 500 !important;
 }
 
-/* ── Tailwind named size scale — ensure adequate floor ──────── */
-.text-xs  { font-size: 0.8125rem; }   /* 13px (was 12px) */
-.text-sm  { font-size: 0.875rem;  }   /* 14px             */
-.text-base{ font-size: 1rem;      }   /* 16px             */
+/* ── Tailwind named scale — bump xs/sm to comfortable floor ─── */
+.text-xs   { font-size: 0.8125rem !important; }  /* 13px */
+.text-sm   { font-size: 0.875rem  !important; }  /* 14px */
+.text-base { font-size: 1rem      !important; }  /* 16px */
 
 /* ── Muted / secondary text — never fall below contrast floor ── */
 .text-muted          { color: var(--t3) !important; }

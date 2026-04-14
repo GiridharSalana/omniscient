@@ -14,19 +14,18 @@ import { useAuth } from '@/context/AuthContext'
 import { useTheme, type ThemeMode } from '@/context/ThemeContext'
 import { api } from '@/lib/api'
 
-// ── Navigation items — Opportunities is the primary entry ─────────
-const NAV_PRIMARY = { href: '/opportunities', label: 'Opportunities', icon: Target }
-
+// ── Navigation items ──────────────────────────────────────────────
 const NAV_ITEMS = [
-  { href: '/screener',  label: 'Screener',  icon: SlidersHorizontal },
-  { href: '/portfolio', label: 'Portfolio', icon: Briefcase         },
-  { href: '/momentum',  label: 'Momentum',  icon: TrendingUp        },
-  { href: '/macro',     label: 'Macro',     icon: Globe             },
-  { href: '/news',      label: 'News',      icon: Newspaper         },
-  { href: '/briefing',  label: 'Briefing',  icon: Activity          },
-  { href: '/chat',      label: 'AI Chat',   icon: MessageSquare     },
-  { href: '/journal',   label: 'Journal',   icon: BookOpen          },
-  { href: '/alerts',    label: 'Alerts',    icon: Bell              },
+  { href: '/opportunities', label: 'Opportunities', icon: Target           },
+  { href: '/screener',      label: 'Screener',      icon: SlidersHorizontal},
+  { href: '/portfolio',     label: 'Portfolio',     icon: Briefcase        },
+  { href: '/momentum',      label: 'Momentum',      icon: TrendingUp       },
+  { href: '/macro',         label: 'Macro',         icon: Globe            },
+  { href: '/news',          label: 'News',          icon: Newspaper        },
+  { href: '/briefing',      label: 'Briefing',      icon: Activity         },
+  { href: '/chat',          label: 'AI Chat',       icon: MessageSquare    },
+  { href: '/journal',       label: 'Journal',       icon: BookOpen         },
+  { href: '/alerts',        label: 'Alerts',        icon: Bell             },
 ]
 
 interface SearchResult { symbol: string; name: string; type: string }
@@ -141,8 +140,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const isLoginPage   = path === '/login'
   const isLandingPage = path === '/'
 
-  const isPrimary = path?.startsWith('/opportunities') || path?.startsWith('/dashboard')
-
   return (
     <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg-void)' }}>
 
@@ -213,41 +210,21 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        {/* Navigation row — centred */}
+        {/* Navigation row — all tabs equal */}
         {!isLoginPage && !isLandingPage && (
           <div className="overflow-x-auto" style={{ borderTop: '1px solid var(--border-dim)', scrollbarWidth: 'none' }}>
-            <div className="flex items-center gap-0.5 px-3 pb-1.5 mx-auto w-fit">
-
-              {/* Primary: Opportunities — styled prominently */}
-              <Link href={NAV_PRIMARY.href}
-                className={cn(
-                  'flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-bold transition-all whitespace-nowrap mr-2 border',
-                  isPrimary ? 'text-white' : 'text-[#c4b5fd]'
-                )}
-                style={{
-                  background:   isPrimary ? 'linear-gradient(135deg,#6d28d9,#7c3aed)' : 'rgba(124,58,237,0.1)',
-                  borderColor:  isPrimary ? '#7c3aed' : 'rgba(124,58,237,0.35)',
-                  boxShadow:    isPrimary ? '0 0 18px rgba(124,58,237,0.5)' : '0 0 8px rgba(124,58,237,0.15)',
-                }}>
-                <NAV_PRIMARY.icon size={13} />
-                {NAV_PRIMARY.label}
-              </Link>
-
-              {/* Divider */}
-              <div className="w-px h-5 mr-1 flex-shrink-0" style={{ background: 'var(--border-default)' }} />
-
-              {/* Secondary items */}
+            <div className="flex items-center gap-0.5 px-3 pb-1 pt-0.5 mx-auto w-fit">
               {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
                 const active = path?.startsWith(href)
                 return (
                   <Link key={href} href={href}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all whitespace-nowrap border"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md whitespace-nowrap transition-all border text-[13px] font-medium"
                     style={{
-                      color:       active ? 'var(--nav-active)'   : 'var(--nav-inactive)',
-                      background:  active ? 'var(--brand-dim)'    : 'transparent',
-                      borderColor: active ? 'rgba(124,58,237,0.3)': 'transparent',
+                      color:       active ? 'var(--nav-active)'    : 'var(--nav-inactive)',
+                      background:  active ? 'var(--brand-dim)'     : 'transparent',
+                      borderColor: active ? 'rgba(124,58,237,0.35)': 'transparent',
                     }}>
-                    <Icon size={12} />
+                    <Icon size={13} />
                     {label}
                   </Link>
                 )
