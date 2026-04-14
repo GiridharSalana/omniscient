@@ -6,11 +6,12 @@ import {
   MessageSquare, TrendingUp, Newspaper, BookOpen,
   Search, User, LogOut, X, ChevronRight, Zap,
   SlidersHorizontal, Briefcase, Bell, Target,
-  Globe, Activity,
+  Globe, Activity, Sun, Moon, Monitor,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '@/context/AuthContext'
+import { useTheme, type ThemeMode } from '@/context/ThemeContext'
 import { api } from '@/lib/api'
 
 // ── Navigation items — Opportunities is the primary entry ─────────
@@ -30,6 +31,62 @@ const NAV_ITEMS = [
 
 interface SearchResult { symbol: string; name: string; type: string }
 
+// ── Theme toggle ──────────────────────────────────────────────────
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [])
+
+  const options: { id: ThemeMode; label: string; Icon: typeof Sun }[] = [
+    { id: 'light',  label: 'Light',  Icon: Sun     },
+    { id: 'dark',   label: 'Dark',   Icon: Moon    },
+    { id: 'system', label: 'System', Icon: Monitor },
+  ]
+
+  const current = options.find(o => o.id === theme) ?? options[2]
+  const { Icon } = current
+
+  return (
+    <div ref={ref} className="relative flex-shrink-0">
+      <button
+        onClick={() => setOpen(v => !v)}
+        title="Switch theme"
+        className="p-2 rounded-lg transition-all flex items-center justify-center"
+        style={{
+          background: open ? 'var(--bg-raised)' : 'transparent',
+          border:     `1px solid ${open ? 'var(--border-default)' : 'transparent'}`,
+          color:      'var(--t2)',
+        }}>
+        <Icon size={15} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-1.5 rounded-xl overflow-hidden z-[200] min-w-[130px] animate-fade-in"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', boxShadow: '0 12px 40px rgba(0,0,0,0.35)' }}>
+          {options.map(({ id, label, Icon: I }) => (
+            <button key={id} onClick={() => { setTheme(id); setOpen(false) }}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[11px] font-medium transition-colors text-left"
+              style={{
+                background: theme === id ? 'var(--brand-dim)' : 'transparent',
+                color:      theme === id ? 'var(--brand)'     : 'var(--t2)',
+              }}>
+              <I size={13} />
+              {label}
+              {theme === id && <span className="ml-auto text-[9px]">✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const path   = usePathname()
   const router = useRouter()
@@ -43,7 +100,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [searching,     setSearching]     = useState(false)
   const searchRef   = useRef<HTMLInputElement>(null)
-  const searchTimer = useRef<ReturnType<typeof setTimeout>>()
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
     const tick = () => {
@@ -91,7 +148,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* ══ HEADER ═══════════════════════════════════════════════════ */}
       <header className="sticky top-0 z-50 flex flex-col"
-        style={{ background: 'linear-gradient(180deg, #050c1a 0%, #040a15 100%)', borderBottom: '1px solid #1a3050', boxShadow: '0 4px 32px rgba(0,0,0,0.7)' }}>
+        style={{ background: 'var(--header-bg)', borderBottom: '1px solid var(--header-border)', boxShadow: 'var(--header-shadow)' }}>
 
         {/* Top accent line — gradient */}
         <div className="h-[2px] w-full" style={{
@@ -119,28 +176,32 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           {!isLoginPage && (
             <button onClick={() => { setSearchOpen(true); setTimeout(() => searchRef.current?.focus(), 50) }}
               className="flex items-center gap-2.5 px-4 py-2 rounded-xl flex-1 max-w-md transition-all group"
-              style={{ border: '1px solid #1a3050', background: 'rgba(7,15,29,0.9)' }}>
-              <Search size={13} style={{ color: '#3d5a78' }} className="group-hover:text-brand transition-colors" />
-              <span className="text-[12px] flex-1 text-left" style={{ color: '#3d5a78' }}>Search any stock or ticker…</span>
-              <kbd className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: '#0b1729', border: '1px solid #1a3050', color: '#3d5a78' }}>⌘K</kbd>
+              style={{ border: '1px solid var(--border-default)', background: 'var(--bg-card)' }}>
+              <Search size={13} style={{ color: 'var(--t3)' }} className="group-hover:text-brand transition-colors" />
+              <span className="text-[12px] flex-1 text-left" style={{ color: 'var(--t3)' }}>Search any stock or ticker…</span>
+              <kbd className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-default)', color: 'var(--t3)' }}>⌘K</kbd>
             </button>
           )}
 
-          {/* Right: Clock + Live + Auth */}
-          <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Right: Clock + Live + Theme + Auth */}
+          <div className="flex items-center gap-2.5 flex-shrink-0">
             <div className="hidden lg:flex flex-col items-end">
-              <div className="num text-[15px] font-semibold text-white leading-none">{time}</div>
-              <div className="text-[8px] uppercase tracking-wider mt-0.5" style={{ color: '#3d5a78' }}>{date} IST</div>
+              <div className="num text-[14px] font-semibold leading-none" style={{ color: 'var(--t1)' }}>{time}</div>
+              <div className="text-[8px] uppercase tracking-wider mt-0.5" style={{ color: 'var(--t3)' }}>{date} IST</div>
             </div>
             <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg"
               style={{ background: 'rgba(5,217,139,0.06)', border: '1px solid rgba(5,217,139,0.2)' }}>
               <div className="pulse-dot" />
-              <span className="text-[10px] font-semibold" style={{ color: '#05d98b' }}>LIVE</span>
+              <span className="text-[10px] font-semibold" style={{ color: 'var(--bull)' }}>LIVE</span>
             </div>
+
+            {/* Theme toggle */}
+            <ThemeToggle />
+
             {!isLoginPage && !isLandingPage && (
               user ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-semibold hidden xl:inline" style={{ color: '#a78bfa' }}>{user.username}</span>
+                  <span className="text-[11px] font-semibold hidden xl:inline" style={{ color: 'var(--brand)' }}>{user.username}</span>
                   <button onClick={logout} className="nav-item !px-2 !py-2" title="Sign out"><LogOut size={14} /></button>
                 </div>
               ) : (
@@ -155,7 +216,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         {/* Navigation row */}
         {!isLoginPage && !isLandingPage && (
           <div className="flex items-center gap-0.5 px-3 pb-1.5 overflow-x-auto"
-            style={{ borderTop: '1px solid rgba(26,48,80,0.4)' }}>
+            style={{ borderTop: '1px solid var(--border-dim)' }}>
 
             {/* Primary: Opportunities — styled prominently */}
             <Link href={NAV_PRIMARY.href}
@@ -180,12 +241,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               const active = path?.startsWith(href)
               return (
                 <Link key={href} href={href}
-                  className={cn(
-                    'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all whitespace-nowrap border',
-                    active
-                      ? 'text-[#93c5fd] bg-[rgba(59,130,246,0.12)] border-[rgba(59,130,246,0.3)]'
-                      : 'text-[#3d5a78] hover:text-[#8faac5] hover:bg-[rgba(11,23,40,0.8)] border-transparent'
-                  )}>
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all whitespace-nowrap border"
+                  style={{
+                    color:       active ? 'var(--nav-active)'   : 'var(--nav-inactive)',
+                    background:  active ? 'var(--brand-dim)'    : 'transparent',
+                    borderColor: active ? 'rgba(124,58,237,0.3)': 'transparent',
+                  }}>
                   <Icon size={12} />
                   {label}
                 </Link>
@@ -199,19 +260,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {searchOpen && (
         <div className="fixed inset-0 z-[100] flex items-start justify-center pt-20 px-4"
           onClick={e => e.target === e.currentTarget && setSearchOpen(false)}
-          style={{ background: 'rgba(2,6,14,0.92)', backdropFilter: 'blur(8px)' }}>
+          style={{ background: 'var(--overlay-bg)', backdropFilter: 'blur(8px)' }}>
           <div className="w-full max-w-xl animate-fade-in rounded-2xl overflow-hidden"
-            style={{ background: '#060e1c', border: '1px solid #1a3050', boxShadow: '0 32px 100px rgba(0,0,0,0.8), 0 0 0 1px rgba(124,58,237,0.2)' }}>
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', boxShadow: '0 32px 100px rgba(0,0,0,0.35), 0 0 0 1px var(--brand-dim)' }}>
 
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-[#1a2235]">
-              <Search size={16} style={{ color: '#7c3aed' }} className="flex-shrink-0" />
+            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: '1px solid var(--border-default)' }}>
+              <Search size={16} style={{ color: 'var(--brand)' }} className="flex-shrink-0" />
               <input ref={searchRef} value={searchQuery}
                 onChange={e => handleSearch(e.target.value)}
                 placeholder="Search stocks: AAPL, RELIANCE.NS, INFY.NS…"
-                className="flex-1 bg-transparent text-[14px] text-white placeholder-[#3d5a78] outline-none"
+                className="flex-1 bg-transparent text-[14px] outline-none"
+                style={{ color: 'var(--t1)' }}
                 autoComplete="off" />
-              {searching && <div className="w-4 h-4 rounded-full border-2 border-[#7c3aed] border-t-transparent animate-spin" />}
-              <button onClick={() => setSearchOpen(false)} style={{ color: '#3d5a78' }} className="hover:text-white transition-colors">
+              {searching && <div className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--brand)', borderTopColor: 'transparent' }} />}
+              <button onClick={() => setSearchOpen(false)} style={{ color: 'var(--t3)' }} className="hover:text-brand transition-colors">
                 <X size={15} />
               </button>
             </div>
@@ -271,7 +333,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {/* ══ STATUS BAR ════════════════════════════════════════════════ */}
       {!isLandingPage && !isLoginPage && (
         <footer className="flex items-center justify-between px-4 py-1 border-t"
-          style={{ background: '#020810', borderColor: '#0d1c30', color: '#3d5a78', fontSize: 9 }}>
+          style={{ background: 'var(--bg-void)', borderColor: 'var(--border-dim)', color: 'var(--t3)', fontSize: 9 }}>
           <span>Omniscient — Opportunities Terminal · Free tier AI routing active</span>
           <div className="flex items-center gap-4">
             {['API', 'DB', 'Cache'].map(s => (
