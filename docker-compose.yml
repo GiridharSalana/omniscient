@@ -108,19 +108,19 @@ services:
       - ./scheduler:/app:cached
 
   # ─────────────────────────────────────────────────────────────────
-  # Frontend — Next.js 14
+  # Frontend — Next.js (production build)
   # ─────────────────────────────────────────────────────────────────
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      target: development
+      target: production
     container_name: omniscient-frontend
     restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000
       NEXT_PUBLIC_WS_URL: ws://localhost:8000
-      WATCHPACK_POLLING: "true"
+      NODE_ENV: production
     ports:
       - "3000:3000"
     networks:
@@ -133,7 +133,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-    volumes:
-      - ./frontend:/app:cached
-      - /app/node_modules
-      - /app/.next

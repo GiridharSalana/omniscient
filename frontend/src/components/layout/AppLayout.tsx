@@ -89,7 +89,14 @@ function ThemeToggle() {
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const path   = usePathname()
   const router = useRouter()
-  const { user, logout } = useAuth()
+  const { user, loading, logout } = useAuth()
+
+  // Route guard — redirect to /login if unauthenticated on protected pages
+  useEffect(() => {
+    if (!loading && !user && path !== '/login' && path !== '/') {
+      router.replace('/login')
+    }
+  }, [loading, user, path, router])
 
   const [time, setTime] = useState('')
   const [date, setDate] = useState('')
@@ -139,6 +146,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   const isLoginPage   = path === '/login'
   const isLandingPage = path === '/'
+  const isPublicPage  = isLoginPage || isLandingPage
+
+  // While resolving auth or redirecting, render nothing to avoid flash
+  if (loading || (!user && !isPublicPage)) return null
 
   return (
     <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg-void)' }}>
@@ -186,12 +197,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <div className="num text-[14px] font-semibold leading-none" style={{ color: 'var(--t1)' }}>{time}</div>
               <div className="text-[8px] uppercase tracking-wider mt-0.5" style={{ color: 'var(--t3)' }}>{date} IST</div>
             </div>
-            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg"
-              style={{ background: 'rgba(5,217,139,0.06)', border: '1px solid rgba(5,217,139,0.2)' }}>
-              <div className="pulse-dot" />
-              <span className="text-[10px] font-semibold" style={{ color: 'var(--bull)' }}>LIVE</span>
-            </div>
-
             {/* Theme toggle */}
             <ThemeToggle />
 

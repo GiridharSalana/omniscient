@@ -57,104 +57,146 @@ const SORT_OPTIONS = [
 
 // ── Market Pulse Top Bar ────────────────────────────────────────────
 
+// Shared IndexPill used in MarketPulseBar
+function IndexPill({ q, label, flag }: { q: { price?: number | null; change_pct?: number | null } | undefined; label: string; flag: string }) {
+  const price = q?.price ?? null
+  const chg   = q?.change_pct ?? null
+  const up    = chg !== null && chg > 0
+  const dn    = chg !== null && chg < 0
+  const clr   = up ? 'var(--bull)' : dn ? 'var(--bear)' : 'var(--t3)'
+  return (
+    <div className="flex flex-col items-center gap-0.5 min-w-[72px]">
+      <div className="flex items-center gap-1">
+        <span className="text-[13px] leading-none">{flag}</span>
+        <span className="text-[11px] font-semibold" style={{ color: 'var(--t2)' }}>{label}</span>
+      </div>
+      <div className="flex items-center gap-1">
+        {price != null ? (
+          <span className="num text-[12px] font-bold" style={{ color: 'var(--t1)' }}>
+            {price >= 10000
+              ? price.toLocaleString('en-IN', { maximumFractionDigits: 0 })
+              : price.toFixed(2)}
+          </span>
+        ) : <span className="text-[11px]" style={{ color: 'var(--t3)' }}>—</span>}
+        {chg != null && (
+          <span className="num text-[11px] font-bold flex items-center gap-0.5" style={{ color: clr }}>
+            {up ? <TrendingUp size={9} /> : dn ? <TrendingDown size={9} /> : <Minus size={9} />}
+            {up ? '+' : ''}{chg.toFixed(2)}%
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Pure market-index bar — no regime/breadth, just 6 tickers centred symmetrically
 function MarketPulseBar({ snapshot }: { snapshot: MarketSnapshot | undefined }) {
-  const all = [
-    ...(snapshot?.americas ?? []),
-    ...(snapshot?.emea ?? []),
-    ...(snapshot?.asia ?? []),
-    ...(snapshot?.india ?? []),
+  const allQ = [
+    ...(snapshot?.americas    ?? []),
+    ...(snapshot?.emea        ?? []),
+    ...(snapshot?.asia        ?? []),
+    ...(snapshot?.india       ?? []),
+    ...(snapshot?.safe_havens ?? []),
   ]
-  const adv = all.filter(q => (q.change_pct ?? 0) > 0).length
-  const dec = all.filter(q => (q.change_pct ?? 0) < 0).length
-  const total = adv + dec
+  const findQ = (sym: string) => allQ.find(q => q.symbol === sym)
 
-  const regime = snapshot?.risk_regime ?? 'neutral'
-  const REGIME: Record<string, { label: string; color: string; bg: string }> = {
-    'risk-on':    { label: 'Risk ON',    color: '#00d68f', bg: 'rgba(0,214,143,0.12)'   },
-    'risk-off':   { label: 'Risk OFF',   color: '#f0384f', bg: 'rgba(240,56,79,0.12)'   },
-    'transition': { label: 'Transition', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)'  },
-    'neutral':    { label: 'Neutral',    color: '#6b7c93', bg: 'rgba(107,124,147,0.12)' },
-  }
-  const r = REGIME[regime] ?? REGIME.neutral
-
-  const KEY_INDICES = [
+  const EQUITY = [
     { sym: '^NSEI',  label: 'Nifty 50', flag: '🇮🇳' },
     { sym: '^BSESN', label: 'Sensex',   flag: '🇮🇳' },
     { sym: '^GSPC',  label: 'S&P 500',  flag: '🇺🇸' },
     { sym: '^IXIC',  label: 'Nasdaq',   flag: '🇺🇸' },
-    { sym: '^VIX',   label: 'VIX',      flag: '📊'  },
-    { sym: 'GC=F',   label: 'Gold',     flag: '🥇'  },
   ]
-  const findQ = (sym: string) => all.find(q => q.symbol === sym)
+  const HAVENS = [
+    { sym: '^VIX', label: 'VIX',  flag: '📊' },
+    { sym: 'GC=F', label: 'Gold', flag: '🥇' },
+  ]
+
+  const Sep = () => <div className="w-px h-8 flex-shrink-0 mx-5" style={{ background: 'var(--border-default)' }} />
 
   return (
-    /* Outer div scrolls on small screens; inner row is min-width natural and centred */
-    <div className="rounded-xl overflow-x-auto" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', scrollbarWidth: 'none' }}>
-      <div className="flex items-center justify-center gap-0 px-4 py-2.5 min-w-max mx-auto">
-
-        {/* ── Regime pill ───────────────────────────── */}
-        <div className="flex items-center gap-2 pr-4">
-          <Activity size={13} style={{ color: r.color }} />
-          <span className="text-[11px] text-muted uppercase tracking-widest font-semibold">Regime</span>
-          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-md"
-            style={{ color: r.color, background: r.bg, border: `1px solid ${r.color}50` }}>
-            {r.label}
-          </span>
-        </div>
-
-        <div className="w-px h-6 mx-3 flex-shrink-0" style={{ background: 'var(--border-default)' }} />
-
-        {/* ── Breadth bar ──────────────────────────── */}
-        <div className="flex items-center gap-2 px-1">
-          <TrendingUp size={12} style={{ color: 'var(--bull)' }} />
-          <span className="num text-[12px] font-bold" style={{ color: 'var(--bull)' }}>{adv}</span>
-          <span className="text-[11px] text-muted">adv</span>
-          <div className="w-20 h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg-raised)' }}>
-            <div className="h-full rounded-full transition-all duration-500"
-              style={{ width: total > 0 ? `${(adv / total) * 100}%` : '50%', background: 'var(--bull)' }} />
-          </div>
-          <span className="text-[11px] text-muted">dec</span>
-          <span className="num text-[12px] font-bold" style={{ color: 'var(--bear)' }}>{dec}</span>
-          <TrendingDown size={12} style={{ color: 'var(--bear)' }} />
-        </div>
-
-        <div className="w-px h-6 mx-3 flex-shrink-0" style={{ background: 'var(--border-default)' }} />
-
-        {/* ── Key indices — each index as a compact pill ── */}
-        <div className="flex items-center gap-5">
-          {KEY_INDICES.map(({ sym, label, flag }) => {
-            const q = findQ(sym)
-            const price = q?.price ?? null
-            const chg = q?.change_pct ?? null
-            const up = chg !== null && chg > 0
-            const dn = chg !== null && chg < 0
-            const clr = up ? 'var(--bull)' : dn ? 'var(--bear)' : 'var(--t3)'
-            return (
-              <div key={sym} className="flex flex-col items-center gap-0.5">
-                <div className="flex items-center gap-1">
-                  <span className="text-[12px] leading-none">{flag}</span>
-                  <span className="text-[11px] font-semibold" style={{ color: 'var(--t2)' }}>{label}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  {price != null ? (
-                    <span className="num text-[12px] font-bold" style={{ color: 'var(--t1)' }}>
-                      {price >= 10000
-                        ? price.toLocaleString('en-IN', { maximumFractionDigits: 0 })
-                        : price.toFixed(2)}
-                    </span>
-                  ) : <span className="text-[11px] text-muted">—</span>}
-                  {chg != null && (
-                    <span className="num text-[11px] font-bold flex items-center gap-0.5" style={{ color: clr }}>
-                      {up ? <TrendingUp size={9} /> : dn ? <TrendingDown size={9} /> : <Minus size={9} />}
-                      {up ? '+' : ''}{chg.toFixed(2)}%
-                    </span>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
+    <div className="rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)' }}>
+      {/* 1fr auto 1fr grid: left equity group | sep | right haven group, all centred as a unit */}
+      <div className="flex items-center justify-center gap-5 px-6 py-3">
+        {EQUITY.map(i => <IndexPill key={i.sym} q={findQ(i.sym)} label={i.label} flag={i.flag} />)}
+        {HAVENS.map(i => <IndexPill key={i.sym} q={findQ(i.sym)} label={i.label} flag={i.flag} />)}
       </div>
+    </div>
+  )
+}
+
+// Regime + breadth header — sits above the pulse bar using the page's empty flanks
+function RegimeBreadthHeader({ snapshot }: { snapshot: MarketSnapshot | undefined }) {
+  const allQ = [
+    ...(snapshot?.americas ?? []),
+    ...(snapshot?.emea     ?? []),
+    ...(snapshot?.asia     ?? []),
+    ...(snapshot?.india    ?? []),
+  ]
+  const adv   = allQ.filter(q => (q.change_pct ?? 0) > 0).length
+  const dec   = allQ.filter(q => (q.change_pct ?? 0) < 0).length
+  const total = adv + dec
+
+  const regime = snapshot?.risk_regime ?? 'neutral'
+  const REGIME_MAP: Record<string, { label: string; color: string; bg: string }> = {
+    'risk-on':    { label: 'Risk ON',    color: '#00d68f', bg: 'rgba(0,214,143,0.20)'   },
+    'risk-off':   { label: 'Risk OFF',   color: '#f0384f', bg: 'rgba(240,56,79,0.20)'   },
+    'transition': { label: 'Transition', color: '#f59e0b', bg: 'rgba(245,158,11,0.20)'  },
+    'neutral':    { label: 'Neutral',    color: '#7dd3fc', bg: 'rgba(125,211,252,0.15)' },
+  }
+  const r = REGIME_MAP[regime] ?? REGIME_MAP.neutral
+
+  // Breadth color: mostly up → bull, mostly down → bear, mixed → amber
+  const breadthColor = total === 0 ? '#94a3b8'
+    : adv / total >= 0.6 ? '#00d68f'
+    : dec / total >= 0.6 ? '#f0384f'
+    : '#f59e0b'
+  const breadthBg    = total === 0 ? 'rgba(148,163,184,0.22)'
+    : adv / total >= 0.6 ? 'rgba(0,214,143,0.22)'
+    : dec / total >= 0.6 ? 'rgba(240,56,79,0.22)'
+    : 'rgba(245,158,11,0.22)'
+  const breadthLabel = total === 0 ? 'No data'
+    : adv / total >= 0.6 ? 'Broad Rally'
+    : dec / total >= 0.6 ? 'Broad Decline'
+    : 'Mixed'
+
+  return (
+    /* 3-col grid: Regime left | Title centre | Breadth right */
+    <div className="grid items-center mb-1" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
+
+      {/* LEFT — Regime: same coloring as Breadth (icon + label + badge all use r.color) */}
+      <div className="flex items-center justify-start gap-2">
+        <Activity size={13} style={{ color: r.color }} />
+        <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: r.color }}>Regime</span>
+        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-md"
+          style={{ color: r.color, background: r.bg, border: `1px solid ${r.color}70` }}>
+          {r.label}
+        </span>
+      </div>
+
+      {/* CENTRE — page title + subtitle */}
+      <div className="flex flex-col items-center text-center px-6">
+        <h1 className="flex items-center gap-2.5 text-[20px] font-bold leading-none" style={{ color: 'var(--t1)' }}>
+          <span className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.4)' }}>
+            <Target size={15} style={{ color: '#a78bfa' }} />
+          </span>
+          Investment &amp; Trading Opportunities
+        </h1>
+        <p className="text-[10px] mt-1.5 max-w-lg leading-relaxed" style={{ color: 'var(--t3)' }}>
+          Multi-signal analysis · Nifty 50 + top US stocks · scored 0–100
+        </p>
+      </div>
+
+      {/* RIGHT — Breadth: identical structure to Regime (icon → label → badge) */}
+      <div className="flex items-center justify-end gap-2">
+        <TrendingUp size={13} style={{ color: breadthColor }} />
+        <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: breadthColor }}>Breadth</span>
+        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-md"
+          style={{ color: breadthColor, background: breadthBg, border: `1px solid ${breadthColor}70` }}>
+          {total > 0 ? `${adv}↑ · ${dec}↓` : breadthLabel}
+        </span>
+      </div>
+
     </div>
   )
 }
@@ -369,7 +411,10 @@ export function OpportunityHub({ defaultRegion = 'all' }: Props) {
   return (
     <div className="flex flex-col gap-3">
 
-      {/* ── Market pulse bar (full-width, symmetric) ───────────── */}
+      {/* ── Header: Regime | Title | Breadth ───────────────────── */}
+      <RegimeBreadthHeader snapshot={snapshot} />
+
+      {/* ── Market pulse bar: pure indices, symmetric ──────────── */}
       <MarketPulseBar snapshot={snapshot} />
 
       {/* ── Filter bar (full-width, symmetric) ────────────────── */}

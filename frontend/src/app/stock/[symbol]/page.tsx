@@ -299,31 +299,27 @@ export default function StockPage() {
 
       {/* ── Hero Header ─────────────────────────────────────────── */}
       <div className="card">
-        <div className="flex items-start gap-3 flex-wrap">
-          {/* Back */}
-          <button onClick={() => router.back()} className="text-muted hover:text-text-primary transition-colors mt-0.5">
+        {/* 3-col: back | symbol+price centred | website */}
+        <div className="grid items-center" style={{ gridTemplateColumns: 'auto 1fr auto' }}>
+          <button onClick={() => router.back()} className="text-muted hover:text-text-primary transition-colors">
             <ChevronLeft size={16} />
           </button>
 
-          {/* Symbol + Name */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
+          {/* Centre: symbol, badges, name, price */}
+          <div className="flex flex-col items-center text-center gap-0.5 px-4">
+            <div className="flex items-center justify-center gap-2 flex-wrap">
               <h1 className="text-[18px] font-bold text-text-primary">{sym}</h1>
               {profile?.exchange && <span className="badge badge-neutral text-[9px]">{profile.exchange}</span>}
-              {profile?.sector && <span className="badge badge-neutral text-[9px]">{profile.sector}</span>}
-              {tech?.overall && <SignalBadge signal={tech.overall} />}
+              {profile?.sector  && <span className="badge badge-neutral text-[9px]">{profile.sector}</span>}
+              {tech?.overall    && <SignalBadge signal={tech.overall} />}
             </div>
-            <div className="text-[11px] text-text-secondary truncate mt-0.5">{profile?.name ?? sym}</div>
-          </div>
-
-          {/* Price */}
-          <div className="text-right flex-shrink-0">
-            <div className="num text-[22px] font-bold text-text-primary">
+            <div className="text-[11px] text-text-secondary">{profile?.name ?? sym}</div>
+            <div className="num text-[22px] font-bold text-text-primary mt-1">
               {currentPrice ? fmt(currentPrice) : '—'}
               {profile?.currency && <span className="text-[11px] text-muted ml-1">{profile.currency}</span>}
             </div>
             {priceChange != null && pricePct != null && (
-              <div className="flex items-center gap-1 justify-end" style={{ color: isUp ? '#00d68f' : '#ff4d6d' }}>
+              <div className="flex items-center justify-center gap-1" style={{ color: isUp ? '#00d68f' : '#ff4d6d' }}>
                 {isUp ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
                 <span className="num text-[12px] font-semibold">
                   {isUp ? '+' : ''}{fmt(priceChange)} ({isUp ? '+' : ''}{pricePct.toFixed(2)}%)
@@ -332,168 +328,164 @@ export default function StockPage() {
             )}
           </div>
 
-          {/* Website */}
-          {profile?.website && (
-            <a href={profile.website} target="_blank" rel="noopener noreferrer"
-               className="nav-item" title="Company website">
-              <ExternalLink size={12} />
-            </a>
-          )}
+          {/* Right: website */}
+          <div>
+            {profile?.website ? (
+              <a href={profile.website} target="_blank" rel="noopener noreferrer"
+                 className="nav-item" title="Company website">
+                <ExternalLink size={12} />
+              </a>
+            ) : <span />}
+          </div>
         </div>
       </div>
 
-      {/* ── Main 2-col grid ─────────────────────────────────────── */}
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-3">
-
-        {/* Left: Chart */}
-        <div className="card space-y-2">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="section-header m-0">
-              <BarChart2 size={12} className="text-brand" />
-              <span className="section-title">Price History</span>
-              {predict && <span className="text-[10px] text-brand ml-1">+ Prophet Forecast</span>}
-            </div>
-            <div className="flex gap-1">
-              {(['3mo','6mo','1y','2y'] as const).map(p => (
-                <button key={p} onClick={() => setPeriod(p)}
-                  className="text-[10px] px-2 py-0.5 rounded transition-colors"
-                  style={{
-                    background: period === p ? '#1e3a5f' : 'transparent',
-                    color: period === p ? '#93c5fd' : '#4a5578',
-                    border: `1px solid ${period === p ? '#3b82f6' : '#1a2235'}`,
-                  }}>
-                  {p.toUpperCase()}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="text-[9px] text-muted flex gap-3">
+      {/* ── Chart — full width ──────────────────────────────────── */}
+      <div className="card space-y-2">
+        <div className="grid items-center gap-2" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
+          <div className="text-[9px] text-muted flex gap-3 justify-start">
             <span className="flex items-center gap-1"><span className="w-2 h-0.5 inline-block rounded bg-[#f59e0b]" /> SMA20</span>
             {predict && <span className="flex items-center gap-1"><span className="w-2 h-0.5 inline-block rounded bg-[#a78bfa]" style={{ borderTop: '2px dashed #a78bfa' }} /> 30d Forecast</span>}
           </div>
-          <CandlestickChart data={history} prediction={predict ?? undefined} />
+          <div className="section-header justify-center m-0">
+            <BarChart2 size={12} className="text-brand" />
+            <span className="section-title">Price History</span>
+            {predict && <span className="text-[10px] text-brand ml-1">+ Prophet Forecast</span>}
+          </div>
+          <div className="flex gap-1 justify-end">
+            {(['3mo','6mo','1y','2y'] as const).map(p => (
+              <button key={p} onClick={() => setPeriod(p)}
+                className="text-[10px] px-2 py-0.5 rounded transition-colors"
+                style={{
+                  background: period === p ? '#1e3a5f' : 'transparent',
+                  color: period === p ? '#93c5fd' : '#4a5578',
+                  border: `1px solid ${period === p ? '#3b82f6' : '#1a2235'}`,
+                }}>
+                {p.toUpperCase()}
+              </button>
+            ))}
+          </div>
         </div>
+        <CandlestickChart data={history} prediction={predict ?? undefined} />
+      </div>
 
-        {/* Right: ML + Technical + Fundamentals */}
-        <div className="space-y-3">
+      {/* ── ML + Technical + Fundamentals — centred flex row ────── */}
+      <div className="flex flex-wrap justify-center gap-3">
 
-          {/* ML Prediction */}
-          {predict && (
-            <div className="card">
-              <div className="section-header">
-                <Brain size={12} className="text-brand" />
-                <span className="section-title">ML Price Prediction</span>
-                <span className="text-[9px] text-muted ml-1">30 days</span>
-              </div>
-              <PredictionWidget pred={predict} />
+        {/* ML Prediction */}
+        {predict && (
+          <div className="card" style={{ flex: '1 1 300px', maxWidth: 420 }}>
+            <div className="section-header justify-center">
+              <Brain size={12} className="text-brand" />
+              <span className="section-title">ML Price Prediction</span>
+              <span className="text-[9px] text-muted ml-1">30 days</span>
             </div>
-          )}
+            <PredictionWidget pred={predict} />
+          </div>
+        )}
 
-          {/* Technical Snapshot */}
-          {tech && (
-            <div className="card space-y-2">
-              <div className="section-header">
-                <Activity size={12} className="text-warn" />
-                <span className="section-title">Technical Snapshot</span>
+        {/* Technical Snapshot */}
+        {tech && (
+          <div className="card space-y-2" style={{ flex: '1 1 300px', maxWidth: 420 }}>
+            <div className="section-header justify-center">
+              <Activity size={12} className="text-warn" />
+              <span className="section-title">Technical Snapshot</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[10px]">
+              <div>
+                <div className="text-muted mb-1">RSI (14)</div>
+                {tech.rsi_14 != null && <RSIGauge value={tech.rsi_14} />}
+                <div className="text-[9px] text-muted mt-0.5 capitalize">{tech.rsi_signal}</div>
               </div>
-
-              {/* RSI */}
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[10px]">
-                <div>
-                  <div className="text-muted mb-1">RSI (14)</div>
-                  {tech.rsi_14 != null && <RSIGauge value={tech.rsi_14} />}
-                  <div className="text-[9px] text-muted mt-0.5 capitalize">{tech.rsi_signal}</div>
+              <div>
+                <div className="text-muted mb-1">Trend</div>
+                <div className="font-semibold capitalize" style={{ color: tech.trend_signal === 'bullish' ? '#00d68f' : tech.trend_signal === 'bearish' ? '#ff4d6d' : '#f59e0b' }}>
+                  {tech.trend_signal}
                 </div>
-                <div>
-                  <div className="text-muted mb-1">Trend</div>
-                  <div className="font-semibold capitalize" style={{ color: tech.trend_signal === 'bullish' ? '#00d68f' : tech.trend_signal === 'bearish' ? '#ff4d6d' : '#f59e0b' }}>
-                    {tech.trend_signal}
-                  </div>
-                </div>
-                {tech.macd != null && (
-                  <div>
-                    <div className="text-muted mb-0.5">MACD</div>
-                    <span className="num font-semibold" style={{ color: (tech.macd_hist ?? 0) >= 0 ? '#00d68f' : '#ff4d6d' }}>{fmt(tech.macd, 3)}</span>
-                  </div>
-                )}
-                {tech.bb_pct != null && (
-                  <div>
-                    <div className="text-muted mb-0.5">BB %</div>
-                    <span className="num font-semibold text-text-secondary">{(tech.bb_pct * 100).toFixed(0)}%</span>
-                  </div>
-                )}
               </div>
+              {tech.macd != null && (
+                <div>
+                  <div className="text-muted mb-0.5">MACD</div>
+                  <span className="num font-semibold" style={{ color: (tech.macd_hist ?? 0) >= 0 ? '#00d68f' : '#ff4d6d' }}>{fmt(tech.macd, 3)}</span>
+                </div>
+              )}
+              {tech.bb_pct != null && (
+                <div>
+                  <div className="text-muted mb-0.5">BB %</div>
+                  <span className="num font-semibold text-text-secondary">{(tech.bb_pct * 100).toFixed(0)}%</span>
+                </div>
+              )}
+            </div>
 
-              {/* Moving Averages */}
-              <div className="space-y-1 pt-1 border-t border-[#1a2235]">
-                {[['SMA 20', tech.sma_20], ['SMA 50', tech.sma_50], ['SMA 200', tech.sma_200]].map(([lbl, val]) => (
-                  val != null && (
-                    <div key={lbl as string} className="flex justify-between items-center text-[10px]">
-                      <span className="text-muted">{lbl}</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="num text-text-secondary">{fmt(val as number)}</span>
-                        {currentPrice != null && (
-                          currentPrice > (val as number)
-                            ? <ArrowUpRight size={10} className="text-bull" />
-                            : <ArrowDownRight size={10} className="text-bear" />
-                        )}
-                      </div>
+            <div className="space-y-1 pt-1 border-t border-[#1a2235]">
+              {[['SMA 20', tech.sma_20], ['SMA 50', tech.sma_50], ['SMA 200', tech.sma_200]].map(([lbl, val]) => (
+                val != null && (
+                  <div key={lbl as string} className="flex justify-between items-center text-[10px]">
+                    <span className="text-muted">{lbl}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="num text-text-secondary">{fmt(val as number)}</span>
+                      {currentPrice != null && (
+                        currentPrice > (val as number)
+                          ? <ArrowUpRight size={10} className="text-bull" />
+                          : <ArrowDownRight size={10} className="text-bear" />
+                      )}
                     </div>
-                  )
-                ))}
-              </div>
-
-              {/* 52W Range */}
-              {tech.week_52_high && tech.week_52_low && currentPrice && (
-                <div className="pt-1 border-t border-[#1a2235]">
-                  <RangeBar low={tech.week_52_low} high={tech.week_52_high} current={currentPrice} />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Fundamentals */}
-          {profile && (
-            <div className="card">
-              <div className="section-header">
-                <Globe size={12} className="text-text-secondary" />
-                <span className="section-title">Fundamentals</span>
-              </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[10px]">
-                {[
-                  ['Market Cap',   fmtM(profile.market_cap)],
-                  ['P/E Ratio',    fmt(profile.pe_ratio)],
-                  ['EPS',          fmt(profile.eps)],
-                  ['Beta',         fmt(profile.beta)],
-                  ['Div Yield',    profile.dividend_yield ? `${(profile.dividend_yield * 100).toFixed(2)}%` : '—'],
-                  ['Avg Volume',   fmtM(profile.avg_volume)],
-                  ['Country',      profile.country ?? '—'],
-                  ['Industry',     profile.industry ?? '—'],
-                ].map(([label, val]) => (
-                  <div key={label} className="flex justify-between border-b border-[#1a2235] pb-1 last:border-0">
-                    <span className="text-muted">{label}</span>
-                    <span className="num text-text-primary font-medium">{val}</span>
                   </div>
-                ))}
-              </div>
-              {profile.description && (
-                <p className="text-[9px] text-muted mt-2 leading-relaxed line-clamp-3">{profile.description}</p>
-              )}
+                )
+              ))}
             </div>
-          )}
-        </div>
+
+            {tech.week_52_high && tech.week_52_low && currentPrice && (
+              <div className="pt-1 border-t border-[#1a2235]">
+                <RangeBar low={tech.week_52_low} high={tech.week_52_high} current={currentPrice} />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Fundamentals */}
+        {profile && (
+          <div className="card" style={{ flex: '1 1 300px', maxWidth: 420 }}>
+            <div className="section-header justify-center">
+              <Globe size={12} className="text-text-secondary" />
+              <span className="section-title">Fundamentals</span>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[10px]">
+              {[
+                ['Market Cap',  fmtM(profile.market_cap)],
+                ['P/E Ratio',   fmt(profile.pe_ratio)],
+                ['EPS',         fmt(profile.eps)],
+                ['Beta',        fmt(profile.beta)],
+                ['Div Yield',   profile.dividend_yield ? `${(profile.dividend_yield * 100).toFixed(2)}%` : '—'],
+                ['Avg Volume',  fmtM(profile.avg_volume)],
+                ['Country',     profile.country ?? '—'],
+                ['Industry',    profile.industry ?? '—'],
+              ].map(([label, val]) => (
+                <div key={label} className="flex justify-between border-b border-[#1a2235] pb-1 last:border-0">
+                  <span className="text-muted">{label}</span>
+                  <span className="num text-text-primary font-medium">{val}</span>
+                </div>
+              ))}
+            </div>
+            {profile.description && (
+              <p className="text-[9px] text-muted mt-2 leading-relaxed line-clamp-3">{profile.description}</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── News ─────────────────────────────────────────────────── */}
       <div className="card">
-        <div className="section-header">
+        <div className="section-header justify-center">
           <Newspaper size={12} className="text-text-secondary" />
           <span className="section-title">News & Sentiment</span>
-          <div className="flex gap-2 ml-2">
-            <span className="text-[10px]" style={{ color: '#00d68f' }}>▲ {newsBull.length} Bullish</span>
-            <span className="text-[10px]" style={{ color: '#ff4d6d' }}>▼ {newsBear.length} Bearish</span>
-            <span className="text-[10px]" style={{ color: '#f59e0b' }}>◆ {newsNeut.length} Neutral</span>
-          </div>
+        </div>
+
+        <div className="flex justify-center gap-6 mt-1 mb-2">
+          <span className="text-[11px] font-semibold" style={{ color: '#00d68f' }}>▲ {newsBull.length} Bullish</span>
+          <span className="text-[11px] font-semibold" style={{ color: '#ff4d6d' }}>▼ {newsBear.length} Bearish</span>
+          <span className="text-[11px] font-semibold" style={{ color: '#f59e0b' }}>◆ {newsNeut.length} Neutral</span>
         </div>
 
         {news.length === 0 ? (

@@ -5,9 +5,21 @@ import useSWR from 'swr'
 import { swrFetcher, api } from '@/lib/api'
 import type { BriefingResponse } from '@/lib/types'
 import { cn, formatDate, regimeBg } from '@/lib/utils'
-import { Activity, RefreshCw, Zap } from 'lucide-react'
+import { Activity, RefreshCw, Zap, FileText } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { Loader } from '@/components/shared/Loader'
+
+// Strip stray ** from key-theme strings that come from the LLM
+const cleanTheme = (t: string) => t.replace(/\*\*/g, '').trim()
+
+// Regime pill colours via CSS variables
+const regimePill: Record<string, { color: string; bg: string; border: string }> = {
+  'risk-on':    { color: '#00d68f', bg: 'rgba(0,214,143,0.12)',   border: 'rgba(0,214,143,0.35)'   },
+  'risk-off':   { color: '#f0384f', bg: 'rgba(240,56,79,0.12)',   border: 'rgba(240,56,79,0.35)'   },
+  'transition': { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.35)'  },
+  'neutral':    { color: '#7dd3fc', bg: 'rgba(125,211,252,0.10)', border: 'rgba(125,211,252,0.30)' },
+}
+const getRegime = (r: string) => regimePill[r.toLowerCase()] ?? regimePill['neutral']
 
 export default function BriefingPage() {
   const [generating, setGenerating] = useState(false)
@@ -39,87 +51,142 @@ export default function BriefingPage() {
   if (isLoading) return <Loader message="Loading briefing..." />
 
   return (
-    <div className="p-2 space-y-2 animate-fade-in">
+    <div className="p-3 space-y-3 animate-fade-in">
 
-      {/* ── Header — centered ───────────────────────────────── */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1" />
+      {/* ── Page header — 3-col grid so title is always centred ── */}
+      <div className="grid items-center" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
+        <div />
         <div className="flex items-center gap-2">
-          <Activity size={15} className="text-brand" />
-          <h1 className="text-sm font-semibold text-text-primary uppercase tracking-wider">Morning Briefing</h1>
+          <Activity size={16} style={{ color: 'var(--brand)' }} />
+          <h1 className="text-[16px] font-bold uppercase tracking-widest" style={{ color: 'var(--t1)' }}>
+            Morning Briefing
+          </h1>
         </div>
-        <div className="flex-1 flex justify-end">
-          <button onClick={generate} disabled={generating} className="btn btn-primary gap-1.5">
+        <div className="flex justify-end">
+          <button onClick={generate} disabled={generating}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-all"
+            style={{ background: 'var(--brand)', color: '#fff', opacity: generating ? 0.7 : 1 }}>
             <Zap size={12} className={generating ? 'animate-pulse' : ''} />
-            {generating ? 'Generating...' : 'Generate Now'}
+            {generating ? 'Generating…' : 'Generate Now'}
           </button>
         </div>
       </div>
 
       {genError && (
-        <div className="card border-bear/30 bg-bear/5 text-center">
-          <p className="text-[12px] text-bear">{genError}</p>
-          <p className="text-[11px] text-muted mt-1">Check API keys in .env — Cohere preferred for briefings</p>
+        <div className="text-center py-3 rounded-xl text-[12px]"
+          style={{ background: 'rgba(240,56,79,0.08)', border: '1px solid rgba(240,56,79,0.25)', color: '#f0384f' }}>
+          {genError}
+          <span className="block text-[11px] mt-0.5" style={{ color: 'var(--t3)' }}>
+            Check API keys in .env — Cohere preferred for briefings
+          </span>
         </div>
       )}
 
-      {/* ── Two-column: balanced 60/40 split ──────────────────── */}
-      <div className="grid grid-cols-[3fr_2fr] gap-2 items-start">
+      {/* ── History strip — horizontal scrollable row ────────── */}
+      {history && history.length > 0 && (
+        <div className="rounded-xl px-4 py-2.5 overflow-x-auto" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', scrollbarWidth: 'none' }}>
+          <div className="flex items-center gap-2 min-w-max mx-auto justify-center">
+            <div className="flex items-center gap-1.5 mr-3 flex-shrink-0">
+              <RefreshCw size={11} style={{ color: 'var(--t3)' }} />
+              <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--t3)' }}>History</span>
+            </div>
+            {history.map(b => {
+              const rp     = b.risk_regime ? getRegime(b.risk_regime) : null
+              const active = selectedId === b.id || (!selectedId && b.id === latest?.id)
+              return (
+                <button key={b.id}
+                  onClick={() => setSelectedId(b.id === selectedId ? null : b.id)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all flex-shrink-0"
+                  style={{
+                    background: active ? 'rgba(124,58,237,0.10)' : 'var(--bg-raised)',
+                    border: `1px solid ${active ? 'rgba(124,58,237,0.4)' : 'var(--border-default)'}`,
+                  }}>
+                  <span className="text-[11px] font-medium" style={{ color: active ? 'var(--t1)' : 'var(--t2)' }}>
+                    {formatDate(b.briefing_date)}
+                  </span>
+                  {rp && (
+                    <span className="text-[10px] px-1.5 py-px rounded font-bold"
+                      style={{ color: rp.color, background: rp.bg, border: `1px solid ${rp.border}` }}>
+                      {b.risk_regime!.toUpperCase()}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
-        {/* Left: Full briefing */}
-        <div className="card space-y-2">
+      {/* ── Full-width briefing content ───────────────────────── */}
+      <div className="rounded-xl p-4 space-y-3" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)' }}>
           {!selected ? (
-            <div className="text-center py-6">
-              <Activity size={24} className="text-muted mx-auto mb-2" />
-              <p className="text-xs text-text-primary">No briefing available</p>
-              <p className="text-[10px] text-muted mt-0.5">Generates automatically at 6 AM IST or click Generate Now</p>
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <FileText size={32} style={{ color: 'var(--t3)' }} />
+              <p className="text-[13px]" style={{ color: 'var(--t2)' }}>No briefing available</p>
+              <p className="text-[11px]" style={{ color: 'var(--t3)' }}>
+                Generates automatically at 6 AM IST or click Generate Now
+              </p>
             </div>
           ) : (
             <>
-              {/* Briefing header — centered */}
-              <div className="section-header">
-                <Activity size={13} className="text-brand" />
-                <span className="section-title">
-                  {formatDate(selected.briefing_date)}
-                </span>
-                <span className="badge border border-[#1c2030] text-[10px] text-muted px-2 py-0.5">
-                  {selected.provider.toUpperCase()}
-                </span>
-                {selected.risk_regime && (
-                  <span className={cn('badge border text-[10px] px-2 py-0.5', regimeBg(selected.risk_regime as any))}>
-                    {selected.risk_regime.toUpperCase()}
+              {/* Briefing meta — centred */}
+              <div className="flex flex-col items-center gap-2 pb-3" style={{ borderBottom: '1px solid var(--border-default)' }}>
+                <div className="flex items-center gap-2 flex-wrap justify-center">
+                  <span className="text-[13px] font-semibold" style={{ color: 'var(--t1)' }}>
+                    {formatDate(selected.briefing_date)}
                   </span>
+                  <span className="text-[11px] px-2 py-0.5 rounded-md font-medium"
+                    style={{ background: 'var(--bg-raised)', color: 'var(--t2)', border: '1px solid var(--border-default)' }}>
+                    {selected.provider.toUpperCase()}
+                  </span>
+                  {selected.risk_regime && (() => {
+                    const rp = getRegime(selected.risk_regime)
+                    return (
+                      <span className="text-[11px] px-2.5 py-0.5 rounded-md font-bold"
+                        style={{ color: rp.color, background: rp.bg, border: `1px solid ${rp.border}` }}>
+                        {selected.risk_regime.toUpperCase()}
+                      </span>
+                    )
+                  })()}
+                </div>
+
+                {/* Key themes — centred, cleaned */}
+                {selected.key_themes.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-1.5 mt-1">
+                    {selected.key_themes.map((t, i) => (
+                      <span key={i} className="text-[11px] px-2.5 py-0.5 rounded-full font-medium"
+                        style={{ background: 'var(--bg-raised)', color: 'var(--t2)', border: '1px solid var(--border-default)' }}>
+                        {cleanTheme(t)}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
 
-              {/* Key themes — compact pills */}
-              {selected.key_themes.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {selected.key_themes.map((t, i) => (
-                    <span key={i} className="badge border border-[#2d3452] text-[9px] text-text-secondary px-1.5 py-px">
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* Content */}
-              <div className="prose-sm space-y-2 text-[12px] leading-relaxed" style={{ color: '#8da3bf' }}>
+              {/* Markdown content */}
+              <div className="space-y-1 text-[13px] leading-relaxed" style={{ color: 'var(--t2)' }}>
                 <ReactMarkdown
                   components={{
-                    h2: ({children}) => (
-                      <h2 className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wider mt-4 mb-2 pb-1"
-                          style={{ color: '#e2e8f0', borderBottom: '1px solid #1a3050' }}>
+                    h2: ({ children }) => (
+                      <h2 className="text-[14px] font-bold uppercase tracking-wide mt-5 mb-2 pb-1.5 flex items-center gap-2"
+                        style={{ color: 'var(--t1)', borderBottom: '1px solid var(--border-default)' }}>
                         {children}
                       </h2>
                     ),
-                    h3: ({children}) => (
-                      <h3 className="text-[11px] font-semibold mt-2 mb-1" style={{ color: '#93c5fd' }}>{children}</h3>
+                    h3: ({ children }) => (
+                      <h3 className="text-[13px] font-semibold mt-3 mb-1" style={{ color: '#93c5fd' }}>
+                        {children}
+                      </h3>
                     ),
-                    ul: ({children}) => <ul className="space-y-1 ml-4 list-disc">{children}</ul>,
-                    li: ({children}) => <li className="text-[12px]">{children}</li>,
-                    p:  ({children}) => <p className="text-[12px]">{children}</p>,
-                    strong: ({children}) => <strong style={{ color: '#e2e8f0', fontWeight: 600 }}>{children}</strong>,
+                    ul: ({ children }) => <ul className="space-y-1.5 ml-4 list-disc">{children}</ul>,
+                    li: ({ children }) => <li className="text-[13px]" style={{ color: 'var(--t2)' }}>{children}</li>,
+                    p:  ({ children }) => <p className="text-[13px]" style={{ color: 'var(--t2)' }}>{children}</p>,
+                    strong: ({ children }) => (
+                      <strong style={{ color: 'var(--t1)', fontWeight: 600 }}>{children}</strong>
+                    ),
+                    em: ({ children }) => (
+                      <em style={{ color: 'var(--t2)', fontStyle: 'italic' }}>{children}</em>
+                    ),
                   }}
                 >
                   {selected.content}
@@ -129,44 +196,6 @@ export default function BriefingPage() {
           )}
         </div>
 
-        {/* Right: History — mirrored card structure */}
-        <div className="card">
-          <div className="section-header">
-            <RefreshCw size={12} className="text-muted" />
-            <span className="section-title">Briefing History</span>
-          </div>
-
-          <div className="space-y-1.5">
-            {!history?.length && (
-              <div className="text-center py-4 text-muted text-xs">No briefing history yet</div>
-            )}
-            {history?.map(b => (
-              <button
-                key={b.id}
-                onClick={() => setSelectedId(b.id === selectedId ? null : b.id)}
-                className={cn(
-                  'w-full flex items-center justify-between p-2.5 rounded border transition-all text-left',
-                  (selectedId === b.id || (!selectedId && b.id === latest?.id))
-                    ? 'border-brand/40 bg-brand/5'
-                    : 'border-[#1c2030] bg-[#13161f] hover:bg-[#1a1e2e] hover:border-[#2d3452]'
-                )}
-              >
-                <div>
-                  <div className="text-[12px] text-text-primary">{formatDate(b.briefing_date)}</div>
-                  {b.risk_regime && (
-                    <span className={cn('badge border text-[9px] mt-0.5', regimeBg(b.risk_regime as any))}>
-                      {b.risk_regime}
-                    </span>
-                  )}
-                </div>
-                <span className="badge border border-[#1c2030] text-[9px] text-muted px-1.5 py-0.5">
-                  {b.provider}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
