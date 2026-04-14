@@ -240,6 +240,36 @@ export interface VolumeAnomaly {
   direction:    'up' | 'down' | 'flat'
 }
 
+// ── Opportunities ─────────────────────────────────────────────────
+export interface OpportunityItem {
+  symbol:            string
+  name:              string | null
+  region:            string
+  price:             number | null
+  change_pct:        number | null
+  volume_ratio:      number | null
+  rsi_14:            number | null
+  overall:           string
+  trend_signal:      string
+  ma_cross:          string
+  pct_from_52w_high: number | null
+  opportunity_score: number
+  matched_presets:   string[]
+  match_reasons:     string[]
+  preset_icons:      string[]
+  primary_preset:    string
+  primary_color:     string
+  data_source:       string
+}
+
+export interface OpportunitiesResponse {
+  opportunities: OpportunityItem[]
+  universe:      number
+  total_matched: number
+  presets_run:   number
+  as_of:         string
+}
+
 // ── Screener ─────────────────────────────────────────────────────
 export interface ScreenerResult {
   symbol:            string

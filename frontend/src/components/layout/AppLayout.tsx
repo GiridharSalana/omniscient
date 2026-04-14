@@ -6,7 +6,7 @@ import {
   LayoutDashboard, MessageSquare, TrendingUp,
   Newspaper, BookOpen, Activity, Globe,
   Search, User, LogOut, X, ChevronRight,
-  SlidersHorizontal, Briefcase, Bell, Zap,
+  SlidersHorizontal, Briefcase, Bell, Zap, Target,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState, useEffect, useRef, useCallback } from 'react'
@@ -14,16 +14,16 @@ import { useAuth } from '@/context/AuthContext'
 import { api } from '@/lib/api'
 
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard',  icon: LayoutDashboard  },
-  { href: '/screener',  label: 'Screener',   icon: SlidersHorizontal },
-  { href: '/portfolio', label: 'Portfolio',  icon: Briefcase         },
-  { href: '/briefing',  label: 'Briefing',   icon: Activity          },
-  { href: '/momentum',  label: 'Momentum',   icon: TrendingUp        },
-  { href: '/macro',     label: 'Macro',      icon: Globe             },
-  { href: '/news',      label: 'News',       icon: Newspaper         },
-  { href: '/chat',      label: 'AI Chat',    icon: MessageSquare     },
-  { href: '/journal',   label: 'Journal',    icon: BookOpen          },
-  { href: '/alerts',    label: 'Alerts',     icon: Bell              },
+  { href: '/dashboard', label: 'Opportunities', icon: Target,           primary: true  },
+  { href: '/screener',  label: 'Screener',      icon: SlidersHorizontal, primary: false },
+  { href: '/portfolio', label: 'Portfolio',     icon: Briefcase,         primary: false },
+  { href: '/momentum',  label: 'Momentum',      icon: TrendingUp,        primary: false },
+  { href: '/macro',     label: 'Macro',         icon: Globe,             primary: false },
+  { href: '/news',      label: 'News',          icon: Newspaper,         primary: false },
+  { href: '/briefing',  label: 'Briefing',      icon: Activity,          primary: false },
+  { href: '/chat',      label: 'AI Chat',       icon: MessageSquare,     primary: false },
+  { href: '/journal',   label: 'Journal',       icon: BookOpen,          primary: false },
+  { href: '/alerts',    label: 'Alerts',        icon: Bell,              primary: false },
 ]
 
 interface SearchResult { symbol: string; name: string; type: string }
@@ -105,7 +105,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
             <div>
               <div className="text-[14px] font-bold tracking-tight text-white leading-none">OMNISCIENT</div>
-              <div className="text-[9px] tracking-[0.2em] uppercase leading-none mt-0.5" style={{ color: '#4a6a8a' }}>Market Intelligence</div>
+              <div className="text-[9px] tracking-[0.2em] uppercase leading-none mt-0.5" style={{ color: '#4a6a8a' }}>Global Opportunities</div>
             </div>
           </Link>
 
@@ -155,8 +155,29 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         {!isLoginPage && !isLandingPage && (
           <div className="flex items-center gap-0.5 px-3 pb-1 overflow-x-auto"
             style={{ borderTop: '1px solid rgba(26,48,80,0.5)' }}>
-            {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+            {NAV_ITEMS.map(({ href, label, icon: Icon, primary }) => {
               const active = path?.startsWith(href)
+              if (primary) {
+                return (
+                  <Link key={href} href={href}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-bold transition-all whitespace-nowrap mr-1',
+                      active
+                        ? 'text-white border'
+                        : 'text-[#c4b5fd] hover:text-white border'
+                    )}
+                    style={{
+                      background: active
+                        ? 'linear-gradient(135deg, #6d28d9, #7c3aed)'
+                        : 'rgba(124,58,237,0.12)',
+                      borderColor: active ? '#7c3aed' : 'rgba(124,58,237,0.4)',
+                      boxShadow: active ? '0 0 14px rgba(124,58,237,0.4)' : '0 0 8px rgba(124,58,237,0.15)',
+                    }}>
+                    <Icon size={13} />
+                    {label}
+                  </Link>
+                )
+              }
               return (
                 <Link key={href} href={href}
                   className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-all whitespace-nowrap',

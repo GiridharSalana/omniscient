@@ -103,9 +103,13 @@ export const api = {
     predict:          (sym: string, days = 30) => fetcher(`/api/v1/stock/${sym}/predict?days=${days}`),
   },
   screener: {
-    presets:      () => fetcher('/api/v1/screener/presets'),
-    run:          (preset: string, region?: string) =>
+    presets:        () => fetcher('/api/v1/screener/presets'),
+    run:            (preset: string, region?: string) =>
       fetcher(`/api/v1/screener/run?preset=${preset}${region ? `&region=${region}` : ''}`),
+    opportunities:  (params?: { region?: string; min_score?: number; limit?: number }) => {
+      const qs = new URLSearchParams(params as Record<string, string>).toString()
+      return fetcher(`/api/v1/screener/opportunities${qs ? `?${qs}` : ''}`)
+    },
     seedUniverse: (region?: string) =>
       fetcher(`/api/v1/screener/seed-universe${region ? `?region=${region}` : ''}`, { method: 'POST' }),
   },

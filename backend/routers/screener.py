@@ -473,6 +473,222 @@ async def run_screener(
     return resp
 
 
+class OpportunityItem(BaseModel):
+    symbol:          str
+    name:            Optional[str] = None
+    region:          str = "global"
+    price:           Optional[float] = None
+    change_pct:      Optional[float] = None
+    volume_ratio:    Optional[float] = None
+    rsi_14:          Optional[float] = None
+    overall:         str = "hold"
+    trend_signal:    str = "neutral"
+    ma_cross:        str = "none"
+    pct_from_52w_high: Optional[float] = None
+    opportunity_score: float = 0.0
+    matched_presets: list[str] = []
+    match_reasons:   list[str] = []
+    preset_icons:    list[str] = []
+    primary_preset:  str = ""
+    primary_color:   str = "#7c3aed"
+    data_source:     str = "db"
+
+
+class OpportunitiesResponse(BaseModel):
+    opportunities: list[OpportunityItem]
+    universe:      int
+    total_matched: int
+    presets_run:   int
+    as_of:         str
+
+
+def _opportunity_score(item: dict, matched_presets: list[str]) -> float:
+    """Compute a 0–100 opportunity score from technical signals and preset matches."""
+    score = 0.0
+
+    # Signal strength
+    signal_scores = {
+        "strong_buy":  35.0, "buy": 20.0, "hold": 5.0,
+        "sell": -10.0, "strong_sell": -20.0,
+    }
+    score += signal_scores.get(item.get("overall", "hold"), 0)
+
+    # RSI contribution
+    rsi = item.get("rsi_14")
+    if rsi is not None:
+        if rsi <= 25:   score += 15
+        elif rsi <= 35: score += 10
+        elif rsi >= 75: score -= 10
+        elif rsi >= 65: score -= 5
+
+    # Trend
+    trend = item.get("trend_signal", "neutral")
+    if trend == "bullish":  score += 10
+    elif trend == "bearish": score -= 5
+
+    # MA cross
+    cross = item.get("ma_cross", "none")
+    if cross == "golden_cross": score += 12
+    elif cross == "death_cross": score -= 8
+
+    # Volume surge bonus
+    vol_r = item.get("volume_ratio")
+    if vol_r:
+        if vol_r >= 3.0: score += 12
+        elif vol_r >= 2.0: score += 7
+        elif vol_r >= 1.5: score += 3
+
+    # Momentum
+    chg = item.get("change_pct", 0) or 0
+    if chg >= 3.0:   score += 8
+    elif chg >= 1.5: score += 4
+    elif chg <= -3.0: score -= 4
+
+    # Nearness to 52W high
+    pct_high = item.get("pct_from_52w_high")
+    if pct_high is not None:
+        if pct_high >= -1.0: score += 8   # new 52W high territory
+        elif pct_high >= -5.0: score += 4
+
+    # Bonus for multi-preset matches
+    score += len(matched_presets) * 4
+
+    # Normalize to 0-100
+    return round(min(100.0, max(0.0, score + 30)), 1)
+
+
+@router.get("/opportunities", response_model=OpportunitiesResponse)
+async def get_opportunities(
+    region: Optional[str] = Query(None, description="india | us | all"),
+    min_score: float       = Query(30.0, description="Minimum opportunity score 0-100"),
+    limit: int             = Query(40, description="Max opportunities to return"),
+    db: AsyncSession       = Depends(get_db),
+    redis                  = Depends(get_redis),
+):
+    """
+    Aggregate ALL screener presets and return a ranked list of investment/trading
+    opportunities with composite opportunity scores. Cached 5 min.
+    """
+    from datetime import datetime, timezone
+
+    cache_key = f"opportunities:{region or 'all'}:{min_score}:{limit}"
+    cached = await redis.get(cache_key)
+    if cached:
+        return OpportunitiesResponse(**json.loads(cached))
+
+    # Determine universe
+    if region == "india":
+        universe = NIFTY50
+    elif region == "us":
+        universe = US_STOCKS
+    else:
+        universe = FULL_UNIVERSE
+
+    # Find symbols with enough price history
+    res = await db.execute(text("""
+        SELECT symbol, COUNT(*) as cnt
+        FROM price_data
+        WHERE symbol = ANY(:syms)
+        GROUP BY symbol
+        HAVING COUNT(*) >= 10
+    """), {"syms": universe})
+    available = {r.symbol for r in res.fetchall()}
+
+    # Get names
+    name_res = await db.execute(text("""
+        SELECT symbol, name FROM watchlist WHERE symbol = ANY(:syms) AND name IS NOT NULL
+        UNION ALL
+        SELECT i.symbol, i.name FROM indices i
+        WHERE i.symbol = ANY(:syms) AND i.name IS NOT NULL
+          AND i.symbol NOT IN (SELECT symbol FROM watchlist WHERE symbol = ANY(:syms) AND name IS NOT NULL)
+    """), {"syms": list(available)})
+    names = {r.symbol: r.name for r in name_res.fetchall()}
+
+    # Compute technicals for all available symbols once
+    tech_map: dict[str, dict] = {}
+    for sym in universe:
+        if sym not in available:
+            continue
+        try:
+            tech = await _compute_tech(db, sym, names.get(sym))
+            if tech:
+                tech_map[sym] = tech
+        except Exception as e:
+            logger.warning("Opportunity tech error for %s: %s", sym, e)
+
+    # Run all presets and collect matches per symbol
+    ALL_PRESETS = list(PRESET_DEFINITIONS.keys())
+    symbol_matches: dict[str, dict] = {}
+
+    for preset_id in ALL_PRESETS:
+        info = PRESET_DEFINITIONS[preset_id]
+        for sym, tech in tech_map.items():
+            reason = _apply_preset(tech, preset_id)
+            if reason:
+                if sym not in symbol_matches:
+                    symbol_matches[sym] = {
+                        **tech,
+                        "matched_presets": [],
+                        "match_reasons": [],
+                        "preset_icons": [],
+                    }
+                symbol_matches[sym]["matched_presets"].append(preset_id)
+                symbol_matches[sym]["match_reasons"].append(reason)
+                symbol_matches[sym]["preset_icons"].append(info["icon"])
+
+    # Build opportunity items with scores
+    region_map = {s: "india" for s in NIFTY50}
+    region_map.update({s: "us" for s in US_STOCKS})
+
+    opportunities: list[OpportunityItem] = []
+    for sym, data in symbol_matches.items():
+        matched = data["matched_presets"]
+        score = _opportunity_score(data, matched)
+        if score < min_score:
+            continue
+
+        # Primary preset: prefer strong signals; pick first one otherwise
+        priority_order = [
+            "golden_cross", "strong_trend", "momentum_breakout",
+            "oversold_bounce", "near_52w_high", "volume_surge", "gap_up", "gap_down",
+        ]
+        primary = next((p for p in priority_order if p in matched), matched[0] if matched else "")
+        primary_info = PRESET_DEFINITIONS.get(primary, {})
+
+        opportunities.append(OpportunityItem(
+            symbol=sym,
+            name=data.get("name"),
+            region=region_map.get(sym, "global"),
+            price=data.get("price"),
+            change_pct=data.get("change_pct"),
+            volume_ratio=data.get("volume_ratio"),
+            rsi_14=data.get("rsi_14"),
+            overall=data.get("overall", "hold"),
+            trend_signal=data.get("trend_signal", "neutral"),
+            ma_cross=data.get("ma_cross", "none"),
+            pct_from_52w_high=data.get("pct_from_52w_high"),
+            opportunity_score=score,
+            matched_presets=matched,
+            match_reasons=data["match_reasons"],
+            preset_icons=data["preset_icons"],
+            primary_preset=primary_info.get("label", primary),
+            primary_color=primary_info.get("color", "#7c3aed"),
+            data_source=data.get("data_source", "db"),
+        ))
+
+    opportunities.sort(key=lambda o: o.opportunity_score, reverse=True)
+
+    resp = OpportunitiesResponse(
+        opportunities=opportunities[:limit],
+        universe=len(available),
+        total_matched=len(opportunities),
+        presets_run=len(ALL_PRESETS),
+        as_of=datetime.now(timezone.utc).isoformat(),
+    )
+    await redis.setex(cache_key, 300, resp.model_dump_json())
+    return resp
+
+
 @router.post("/seed-universe")
 async def seed_universe(
     region: Optional[str] = Query(None, description="india | us | all"),
