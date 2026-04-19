@@ -46,8 +46,8 @@ function SectorTile({ s, view }: { s: SectorPerf; view: '1D' | '5D' | '1M' | 'YT
 
   return (
     <div
-      className="rounded border border-[#1a3050] flex flex-col items-center justify-center py-2 px-1 cursor-default transition-all hover:scale-105 hover:z-10"
-      style={{ background: bg, minHeight: 52 }}
+      className="rounded flex flex-col items-center justify-center py-2 px-1 cursor-default transition-all hover:scale-105 hover:z-10"
+      style={{ background: bg, minHeight: 52, border: '1px solid var(--border-default)' }}
       title={`${s.sector}: ${sign}${val?.toFixed(2) ?? '—'}%`}
     >
       <div className="text-[9px] text-text-secondary font-medium text-center leading-tight mb-0.5">
@@ -72,8 +72,8 @@ export function SectorHeatMap() {
   if (isLoading) {
     return (
       <div className="card animate-pulse">
-        <div className="h-2.5 w-28 rounded mx-auto mb-3" style={{ background: '#1a3050' }} />
-        <div className="grid grid-cols-6 gap-1.5">
+        <div className="h-2.5 w-28 rounded mx-auto mb-3 skeleton" />
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
           {[...Array(12)].map((_, i) => (
             <div key={i} className="h-12 rounded" style={{ background: '#0f1f38' }} />
           ))}

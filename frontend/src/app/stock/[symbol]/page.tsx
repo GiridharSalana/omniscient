@@ -46,14 +46,18 @@ function CandlestickChart({ data, prediction }: { data: OHLCVBar[], prediction?:
         lcRef.current = null
       }
 
+      const cs = getComputedStyle(document.documentElement)
+      const borderColor = cs.getPropertyValue('--border-default').trim() || '#1a3050'
+      const textColor   = cs.getPropertyValue('--t3').trim() || '#64748b'
+      const gridColor   = cs.getPropertyValue('--border-dim').trim() || 'rgba(26,48,80,0.4)'
       const chart = createChart(chartRef.current, {
         width:  chartRef.current.clientWidth,
-        height: 320,
-        layout: { background: { color: 'transparent' }, textColor: '#64748b' },
-        grid:   { vertLines: { color: 'rgba(26,48,80,0.4)' }, horzLines: { color: 'rgba(26,48,80,0.4)' } },
+        height: 360,
+        layout: { background: { color: 'transparent' }, textColor },
+        grid:   { vertLines: { color: gridColor }, horzLines: { color: gridColor } },
         crosshair: { mode: CrosshairMode.Normal },
-        rightPriceScale: { borderColor: '#1a3050' },
-        timeScale:       { borderColor: '#1a3050', timeVisible: true },
+        rightPriceScale: { borderColor },
+        timeScale:       { borderColor, timeVisible: true },
       })
       lcRef.current = chart
 
@@ -132,7 +136,7 @@ function RSIGauge({ value }: { value: number }) {
   const pct   = Math.min(100, Math.max(0, value))
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: '#1a2235' }}>
+      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-raised)' }}>
         <div style={{ width: `${pct}%`, background: color, height: '100%', transition: 'width 0.5s' }} />
       </div>
       <span className="num text-[11px] font-bold" style={{ color }}>{value.toFixed(0)}</span>
@@ -145,7 +149,7 @@ function RangeBar({ low, high, current }: { low: number; high: number; current: 
   const pct = ((current - low) / (high - low + 1e-10)) * 100
   return (
     <div className="space-y-1">
-      <div className="relative h-1.5 rounded-full" style={{ background: '#1a2235' }}>
+      <div className="relative h-1.5 rounded-full" style={{ background: 'var(--bg-raised)' }}>
         <div className="absolute inset-y-0 rounded-full" style={{ left: 0, right: `${100 - pct}%`, background: 'linear-gradient(90deg,#ff4d6d,#f59e0b,#00d68f)' }} />
         <div className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border-2" style={{ left: `${pct}%`, transform: 'translate(-50%, -50%)', background: '#fff', borderColor: '#4f46e5' }} />
       </div>
@@ -177,15 +181,15 @@ function PredictionWidget({ pred }: { pred: Prediction }) {
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-3 gap-2">
-        <div className="text-center p-2 rounded" style={{ background: 'rgba(15,31,56,0.6)', border: '1px solid #1a2235' }}>
+        <div className="text-center p-2 rounded" style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-default)' }}>
           <div className="text-[9px] text-muted uppercase mb-0.5">Current</div>
           <div className="num text-[14px] font-bold text-text-primary">{fmt(pred.current_price)}</div>
         </div>
-        <div className="text-center p-2 rounded" style={{ background: `${trendColor}10`, border: `1px solid ${trendColor}40` }}>
+        <div className="text-center p-2 rounded" style={{ background: `${trendColor}18`, border: `1px solid ${trendColor}40` }}>
           <div className="text-[9px] text-muted uppercase mb-0.5">30d Target</div>
           <div className="num text-[14px] font-bold" style={{ color: trendColor }}>{fmt(pred.target_price)}</div>
         </div>
-        <div className="text-center p-2 rounded" style={{ background: 'rgba(15,31,56,0.6)', border: '1px solid #1a2235' }}>
+        <div className="text-center p-2 rounded" style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-default)' }}>
           <div className="text-[9px] text-muted uppercase mb-0.5">Upside</div>
           <div className="num text-[14px] font-bold" style={{ color: trendColor }}>
             {upside >= 0 ? '+' : ''}{upside.toFixed(1)}%
@@ -195,7 +199,7 @@ function PredictionWidget({ pred }: { pred: Prediction }) {
 
       <div>
         <div className="text-[9px] text-muted mb-1">Confidence Band</div>
-        <div className="relative h-2 rounded-full overflow-hidden" style={{ background: '#1a2235' }}>
+        <div className="relative h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg-raised)' }}>
           <div style={{
             position: 'absolute', top: 0, bottom: 0,
             left: `${((pred.lower_bound - pred.current_price * 0.8) / (pred.current_price * 0.4)) * 100}%`,
@@ -369,12 +373,12 @@ export default function StockPage() {
         <CandlestickChart data={history} prediction={predict ?? undefined} />
       </div>
 
-      {/* ── ML + Technical + Fundamentals — centred flex row ────── */}
-      <div className="flex flex-wrap justify-center gap-3">
+      {/* ── ML + Technical + Fundamentals ────────────────────────── */}
+      <div className={cn('grid grid-cols-1 md:grid-cols-2 gap-3', predict && 'lg:grid-cols-3')}>
 
         {/* ML Prediction */}
         {predict && (
-          <div className="card" style={{ flex: '1 1 300px', maxWidth: 420 }}>
+          <div className="card">
             <div className="section-header justify-center">
               <Brain size={12} className="text-brand" />
               <span className="section-title">ML Price Prediction</span>
@@ -386,7 +390,7 @@ export default function StockPage() {
 
         {/* Technical Snapshot */}
         {tech && (
-          <div className="card space-y-2" style={{ flex: '1 1 300px', maxWidth: 420 }}>
+          <div className="card space-y-2">
             <div className="section-header justify-center">
               <Activity size={12} className="text-warn" />
               <span className="section-title">Technical Snapshot</span>
@@ -418,7 +422,7 @@ export default function StockPage() {
               )}
             </div>
 
-            <div className="space-y-1 pt-1 border-t border-[#1a2235]">
+            <div className="space-y-1 pt-1" style={{ borderTop: '1px solid var(--border-default)' }}>
               {[['SMA 20', tech.sma_20], ['SMA 50', tech.sma_50], ['SMA 200', tech.sma_200]].map(([lbl, val]) => (
                 val != null && (
                   <div key={lbl as string} className="flex justify-between items-center text-[10px]">
@@ -437,7 +441,7 @@ export default function StockPage() {
             </div>
 
             {tech.week_52_high && tech.week_52_low && currentPrice && (
-              <div className="pt-1 border-t border-[#1a2235]">
+              <div className="pt-1" style={{ borderTop: '1px solid var(--border-default)' }}>
                 <RangeBar low={tech.week_52_low} high={tech.week_52_high} current={currentPrice} />
               </div>
             )}
@@ -446,7 +450,7 @@ export default function StockPage() {
 
         {/* Fundamentals */}
         {profile && (
-          <div className="card" style={{ flex: '1 1 300px', maxWidth: 420 }}>
+          <div className="card">
             <div className="section-header justify-center">
               <Globe size={12} className="text-text-secondary" />
               <span className="section-title">Fundamentals</span>
@@ -462,7 +466,7 @@ export default function StockPage() {
                 ['Country',     profile.country ?? '—'],
                 ['Industry',    profile.industry ?? '—'],
               ].map(([label, val]) => (
-                <div key={label} className="flex justify-between border-b border-[#1a2235] pb-1 last:border-0">
+                <div key={label} className="flex justify-between pb-1 last:border-0" style={{ borderBottom: '1px solid var(--border-default)' }}>
                   <span className="text-muted">{label}</span>
                   <span className="num text-text-primary font-medium">{val}</span>
                 </div>
@@ -491,11 +495,11 @@ export default function StockPage() {
         {news.length === 0 ? (
           <div className="py-6 text-center text-muted text-[11px]">No recent news found for {sym}</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 mt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 mt-1">
             {news.map((item, i) => (
               <a key={i} href={item.url ?? '#'} target="_blank" rel="noopener noreferrer"
-                className="block p-2.5 rounded hover:bg-[#0f1f38] transition-colors group"
-                style={{ border: '1px solid #1a2235', background: 'rgba(10,22,40,0.6)' }}>
+                className="block p-2.5 rounded transition-colors group hover:border-brand"
+                style={{ border: '1px solid var(--border-default)', background: 'var(--bg-raised)' }}>
                 <div className="flex items-start gap-1.5 mb-1">
                   <span className="text-[10px] flex-shrink-0 mt-0.5" style={{ color: sentimentColor(item.sentiment) }}>
                     {sentimentIcon(item.sentiment)}

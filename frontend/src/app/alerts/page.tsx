@@ -142,8 +142,10 @@ function CreateAlertForm({ onClose, onCreated }: { onClose: () => void; onCreate
                 className={cn('text-left p-2.5 rounded-lg border transition-all',
                   type === t.id
                     ? 'border-opacity-60'
-                    : 'border-[#1a2235] bg-[#0a1628] hover:border-[#1e3050]')}
-                style={type === t.id ? { borderColor: color, background: `${color}10` } : {}}>
+                    : '')}
+                style={type === t.id
+                  ? { borderColor: color, background: `${color}10` }
+                  : { borderColor: 'var(--border-default)', background: 'var(--bg-raised)' }}>
                 <div className="text-[10px] font-semibold" style={{ color: type === t.id ? color : '#8da3bf' }}>
                   {t.label}
                 </div>
@@ -274,7 +276,14 @@ export default function AlertsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {active.map(a => <AlertCard key={a.id} alert={a} onDelete={() => deleteAlert(a.id)} />)}
+            {active.map((a, idx) => {
+              const isOrphan = active.length % 2 === 1 && idx === active.length - 1
+              return (
+                <div key={a.id} className={isOrphan ? 'sm:col-span-2' : ''}>
+                  <AlertCard alert={a} onDelete={() => deleteAlert(a.id)} />
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
@@ -288,7 +297,14 @@ export default function AlertsPage() {
             <span className="badge badge-bear text-[8px]">{triggered.length}</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {triggered.map(a => <AlertCard key={a.id} alert={a} onDelete={() => deleteAlert(a.id)} />)}
+            {triggered.map((a, idx) => {
+              const isOrphan = triggered.length % 2 === 1 && idx === triggered.length - 1
+              return (
+                <div key={a.id} className={isOrphan ? 'sm:col-span-2' : ''}>
+                  <AlertCard alert={a} onDelete={() => deleteAlert(a.id)} />
+                </div>
+              )
+            })}
           </div>
         </div>
       )}

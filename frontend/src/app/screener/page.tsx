@@ -46,7 +46,7 @@ function RsiBar({ rsi }: { rsi: number | null }) {
   const color = rsi <= 30 ? '#00d68f' : rsi >= 70 ? '#ff4d6d' : '#fbbf24'
   return (
     <div className="flex items-center gap-1.5">
-      <div className="w-14 h-1.5 rounded-full overflow-hidden bg-[#1a2235]">
+      <div className="w-14 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-raised)' }}>
         <div style={{ width: `${Math.min(100, rsi)}%`, height: '100%', background: color }} />
       </div>
       <span className="num text-[10px] font-bold" style={{ color }}>{rsi.toFixed(0)}</span>
@@ -224,7 +224,7 @@ export default function ScreenerPage() {
       </div>
 
       {/* ── Preset grid — 8 tiles ─────────────────────────────────── */}
-      <div className="grid grid-cols-4 lg:grid-cols-8 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
         {PRESETS.map(p => {
           const active = preset === p.id
           return (
@@ -279,8 +279,8 @@ export default function ScreenerPage() {
       {/* ── Results ───────────────────────────────────────────────── */}
       {isLoading ? (
         view === 'grid' ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-            {[...Array(10)].map((_, i) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+            {[...Array(8)].map((_, i) => (
               <div key={i} className="skeleton rounded-xl" style={{ height: 160, animationDelay: `${i * 60}ms` }} />
             ))}
           </div>
@@ -310,10 +310,18 @@ export default function ScreenerPage() {
       ) : view === 'grid' ? (
 
         /* Grid view */
-        <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-          {data.results.map(r => (
-            <ResultCard key={r.symbol} r={r} onClick={() => router.push(`/stock/${r.symbol}`)} />
-          ))}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+          {data.results.map((r, idx) => {
+            const n = data.results.length
+            const cols = 4
+            const rem = n % cols
+            const isLastOrphan = rem === 1 && idx === n - 1
+            return (
+              <div key={r.symbol} className={isLastOrphan ? 'col-span-2 sm:col-span-3 lg:col-span-2 lg:mx-auto lg:w-1/2' : ''}>
+                <ResultCard r={r} onClick={() => router.push(`/stock/${r.symbol}`)} />
+              </div>
+            )
+          })}
         </div>
 
       ) : (

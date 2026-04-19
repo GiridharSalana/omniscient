@@ -38,11 +38,11 @@ export default function MomentumPage() {
   if (isLoading) return <Loader message="Loading momentum data..." />
 
   return (
-    <div className="p-2 space-y-2 animate-fade-in min-h-[calc(100vh-52px)]">
+    <div className="p-3 space-y-3 animate-fade-in min-h-[calc(100vh-52px)]">
 
-      {/* ── Header — centered ───────────────────────────────── */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1" />
+      {/* ── Header ──────────────────────────────────────────── */}
+      <div className="grid items-center" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
+        <div />
         <div className="flex items-center gap-2">
           <TrendingUp size={16} className="text-bull" />
           <h1 className="text-sm font-semibold text-text-primary uppercase tracking-wider">Momentum Matrix</h1>
@@ -50,7 +50,7 @@ export default function MomentumPage() {
             <span className="text-[11px] text-muted">· {formatRelativeTime(data.updated_at)}</span>
           )}
         </div>
-        <div className="flex-1 flex justify-end">
+        <div className="flex justify-end">
           <button onClick={recalculate} disabled={recalcLoading} className="btn btn-ghost gap-1.5">
             <RefreshCw size={12} className={recalcLoading ? 'animate-spin' : ''} />
             Recalculate
@@ -90,7 +90,7 @@ export default function MomentumPage() {
       </div>
 
       {/* ── Main: Leaders | Laggards (perfectly mirrored) ───── */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
 
         {/* Leaders */}
         <div className="card">
@@ -117,8 +117,8 @@ export default function MomentumPage() {
         </div>
       </div>
 
-      {/* ── How to use momentum + regime guide ──────────────── */}
-      <div className="grid grid-cols-2 gap-2">
+      {/* ── Regime guide + Score methodology ────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         {/* Regime legend */}
         <div className="card">
           <div className="section-header">
@@ -132,7 +132,7 @@ export default function MomentumPage() {
               { r: 'weak',     desc: 'Short-term selling pressure, medium still positive', action: 'REDUCE',  color: '#f97316' },
               { r: 'crashing', desc: 'All timeframes negative — avoid or short', action: 'AVOID',   color: '#ff4d6d' },
             ].map(({ r, desc, action, color }) => (
-              <div key={r} className="flex items-start gap-2 py-1 border-b border-[#1a2235] last:border-0">
+              <div key={r} className="flex items-start gap-2 py-1 last:border-0" style={{ borderBottom: '1px solid var(--border-dim)' }}>
                 <span className="text-[9px] font-bold uppercase w-16 flex-shrink-0 mt-px" style={{ color }}>{r}</span>
                 <span className="text-[10px] text-text-secondary flex-1 leading-snug">{desc}</span>
                 <span className="text-[9px] font-semibold px-1.5 py-px rounded flex-shrink-0" style={{ background: `${color}15`, color, border: `1px solid ${color}30` }}>{action}</span>
@@ -163,7 +163,7 @@ export default function MomentumPage() {
                 </div>
               ))}
             </div>
-            <p className="text-muted pt-1 border-t border-[#1a2235]">
+            <p className="text-muted pt-1" style={{ borderTop: '1px solid var(--border-dim)' }}>
               Percentile rank shows where each stock sits vs all tracked securities.
               Leaders are non-overlapping with laggards.
             </p>
@@ -209,7 +209,8 @@ function FullMomentumTable({ rows, side }: { rows: MomentumScore[]; side: 'leade
   }
 
   return (
-    <table className="sym-table w-full">
+    <div className="overflow-x-auto">
+    <table className="sym-table w-full min-w-[480px]">
       <thead>
         <tr>
           <th>#</th>
@@ -264,5 +265,6 @@ function FullMomentumTable({ rows, side }: { rows: MomentumScore[]; side: 'leade
         ))}
       </tbody>
     </table>
+    </div>
   )
 }

@@ -124,17 +124,18 @@ export default function ChatPage() {
     <div className="h-[calc(100vh-52px)] flex flex-col p-2 gap-2">
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex-1" />
+      <div className="grid items-center" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
+        <div />
         <div className="flex items-center gap-2">
           <Zap size={14} style={{ color: '#818cf8' }} />
           <h1 className="text-sm font-semibold text-text-primary uppercase tracking-wider">AI Market Intelligence</h1>
         </div>
-        <div className="flex-1 flex justify-end gap-2 items-center">
+        <div className="flex justify-end gap-2 items-center">
           <label className="flex items-center gap-1.5 cursor-pointer select-none">
             <span className="text-[10px] text-muted">RAG</span>
             <div onClick={() => setUseRag(v => !v)}
-              className={cn('w-8 h-4 rounded-full transition-colors relative cursor-pointer', useRag ? 'bg-brand' : 'bg-[#1a3050]')}>
+              className={cn('w-8 h-4 rounded-full transition-colors relative cursor-pointer', useRag ? 'bg-brand' : '')}
+              style={useRag ? undefined : { background: 'var(--bg-raised)', border: '1px solid var(--border-default)' }}>
               <span className={cn('absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all', useRag ? 'left-[18px]' : 'left-0.5')} />
             </div>
           </label>
@@ -171,7 +172,31 @@ export default function ChatPage() {
                   <p className="text-[13px] font-semibold text-text-primary">Ask me anything about markets</p>
                   <p className="text-[10px] text-muted mt-0.5">RAG over live news · Technical analysis · Macro context</p>
                 </div>
-                <p className="text-[10px] text-muted">Type your question below to get started</p>
+                <p className="text-[10px] text-muted">Pick a prompt below or type your own question</p>
+
+                {/* Suggestion categories grid */}
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 mt-2 max-w-5xl">
+                  {SUGGESTION_CATEGORIES.map(cat => {
+                    const Icon = cat.icon
+                    return (
+                      <div key={cat.label} className="rounded-lg p-2.5 text-left space-y-1.5"
+                           style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-default)' }}>
+                        <div className="flex items-center gap-1.5">
+                          <Icon size={12} style={{ color: cat.color }} />
+                          <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: cat.color }}>{cat.label}</span>
+                        </div>
+                        <div className="space-y-1">
+                          {cat.questions.map(q => (
+                            <button key={q} onClick={() => send(q)}
+                              className="block w-full text-left text-[10px] text-text-secondary hover:text-text-primary transition-colors leading-snug">
+                              · {q}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
 
                 {/* Live market context chips */}
                 {(techData || macroData) && (

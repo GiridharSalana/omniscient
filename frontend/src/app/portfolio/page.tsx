@@ -99,7 +99,7 @@ function PositionSizer() {
         <span className="text-[9px] text-muted ml-1">Risk-based calculator</span>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* Left column: Capital + Risk% */}
         <div className="space-y-2">
           <label className="text-[9px] text-muted uppercase tracking-wider block">Capital (₹)</label>
@@ -111,7 +111,8 @@ function PositionSizer() {
             {['0.5','1','1.5','2'].map(v => (
               <button key={v} onClick={() => setRiskPct(v)}
                 className={cn('flex-1 py-1 rounded text-[10px] font-semibold transition-colors',
-                  riskPct === v ? 'bg-warn/20 text-warn border border-warn/40' : 'bg-[#0f1f38] text-muted border border-[#1a2235]')}>
+                  riskPct === v ? 'bg-warn/20 text-warn border border-warn/40' : 'text-muted')}
+                style={riskPct !== v ? { background: 'var(--bg-raised)', border: '1px solid var(--border-default)' } : {}}>
                 {v}%
               </button>
             ))}
@@ -131,7 +132,7 @@ function PositionSizer() {
       </div>
 
       {/* Entry Price — full-width, centred below both columns */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-2">
           <label className="text-[9px] text-muted uppercase tracking-wider block">Entry Price</label>
           <input type="number" className="input" placeholder="1500.00"

@@ -48,7 +48,7 @@ function YieldCurveChart({ points }: { points: YieldCurvePoint[] }) {
           <line key={t}
             x1={PAD} y1={PAD + t * (H - PAD * 2)}
             x2={W - PAD} y2={PAD + t * (H - PAD * 2)}
-            stroke="#1a3050" strokeWidth="0.5" strokeDasharray="2 2"
+            stroke="var(--border-default)" strokeWidth="0.5" strokeDasharray="2 2"
           />
         ))}
         {/* Area fill */}
@@ -95,7 +95,7 @@ function IndicatorRow({ ind }: { ind: MacroIndicator }) {
     : null
 
   return (
-    <div className="flex items-center gap-2 py-1 px-1.5 rounded hover:bg-[#0f1f38] transition-colors">
+    <div className="flex items-center gap-2 py-1 px-1.5 rounded transition-colors" style={{ ['--tw-bg' as any]: 'var(--bg-hover)' }} onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'} onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = ''}>
       <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: signalCfg.dot, boxShadow: `0 0 4px ${signalCfg.dot}` }} />
       <span className="text-[10px] text-text-secondary flex-1 min-w-0 truncate">{ind.label}</span>
       <div className="flex items-center gap-2 flex-shrink-0">
@@ -142,8 +142,8 @@ export function MacroPanel() {
   if (isLoading || !data) {
     return (
       <div className="card space-y-2 animate-pulse">
-        <div className="h-2.5 w-28 rounded mx-auto" style={{ background: '#1a3050' }} />
-        {[1,2,3,4,5,6].map(i => <div key={i} className="h-4 rounded" style={{ background: '#1a3050', opacity: 1 - i * 0.1 }} />)}
+        <div className="h-2.5 w-28 rounded mx-auto skeleton" />
+        {[1,2,3,4,5,6].map(i => <div key={i} className="h-4 rounded skeleton" style={{ opacity: 1 - i * 0.1 }} />)}
       </div>
     )
   }
@@ -168,7 +168,7 @@ export function MacroPanel() {
       </div>
 
       {/* Yield Curve */}
-      <div className="pt-1 mt-1 border-t border-[#1a3050]">
+      <div className="pt-1 mt-1" style={{ borderTop: '1px solid var(--border-default)' }}>
         <YieldCurveChart points={data.yield_curve} />
       </div>
     </div>

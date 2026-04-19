@@ -44,17 +44,17 @@ export default function NewsPage() {
   if (isLoading) return <Loader message="Loading news feed..." />
 
   return (
-    <div className="p-2 space-y-2 animate-fade-in">
+    <div className="p-3 space-y-3 animate-fade-in">
 
-      {/* ── Header — centered ───────────────────────────────── */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1" />
+      {/* ── Header ──────────────────────────────────────────── */}
+      <div className="grid items-center" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
+        <div />
         <div className="flex items-center gap-2">
           <Newspaper size={15} className="text-info" />
           <h1 className="text-sm font-semibold text-text-primary uppercase tracking-wider">News Intelligence</h1>
           <span className="text-[11px] text-muted">· {displayed.length} items</span>
         </div>
-        <div className="flex-1 flex justify-end">
+        <div className="flex justify-end">
           <button onClick={() => { setSearchResults(null); mutate() }}
             className="btn btn-ghost gap-1">
             <RefreshCw size={11} />Refresh
@@ -113,10 +113,16 @@ export default function NewsPage() {
       {displayed.length === 0 ? (
         <div className="text-center py-6 text-muted text-xs">No news matching filters</div>
       ) : (
-        <div className="grid grid-cols-3 gap-1.5">
-          {displayed.map(item => (
-            <NewsCard key={item.id} item={item} />
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+          {displayed.map((item, idx) => {
+            const total = displayed.length
+            const isOrphan = total % 3 === 1 && idx === total - 1
+            return (
+              <div key={item.id} className={isOrphan ? 'lg:col-start-2' : ''}>
+                <NewsCard item={item} />
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

@@ -167,12 +167,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="flex items-center justify-between px-4 py-2 gap-4">
 
           {/* Logo */}
-          <Link href="/opportunities" className="flex items-center gap-2.5 flex-shrink-0 group">
+          <Link href="/opportunities" className="flex items-center gap-2 flex-shrink-0 group">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
               style={{ background: 'linear-gradient(135deg,#5b21b6,#7c3aed)', boxShadow: '0 0 20px rgba(124,58,237,0.6)', border: '1px solid rgba(124,58,237,0.5)' }}>
               <Zap size={16} className="text-white" />
             </div>
-            <div>
+            <div className="hidden sm:block">
               <div className="text-[14px] font-bold tracking-tight leading-none" style={{ color: 'var(--t1)' }}>OMNISCIENT</div>
               <div className="text-[8px] tracking-[0.25em] uppercase leading-none mt-0.5" style={{ color: 'var(--t3)' }}>
                 Opportunities Terminal
@@ -180,35 +180,42 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </Link>
 
-          {/* Search */}
+          {/* Search — full bar on md+, icon-only on mobile */}
           {!isLoginPage && (
-            <button onClick={() => { setSearchOpen(true); setTimeout(() => searchRef.current?.focus(), 50) }}
-              className="flex items-center gap-2.5 px-4 py-2 rounded-xl flex-1 max-w-md transition-all group"
-              style={{ border: '1px solid var(--border-default)', background: 'var(--bg-card)' }}>
-              <Search size={13} style={{ color: 'var(--t3)' }} className="group-hover:text-brand transition-colors" />
-              <span className="text-[12px] flex-1 text-left" style={{ color: 'var(--t3)' }}>Search any stock or ticker…</span>
-              <kbd className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-default)', color: 'var(--t3)' }}>⌘K</kbd>
-            </button>
+            <>
+              {/* Desktop search bar */}
+              <button onClick={() => { setSearchOpen(true); setTimeout(() => searchRef.current?.focus(), 50) }}
+                className="hidden sm:flex items-center gap-2.5 px-4 py-2 rounded-xl flex-1 max-w-md transition-all group"
+                style={{ border: '1px solid var(--border-default)', background: 'var(--bg-card)' }}>
+                <Search size={13} style={{ color: 'var(--t3)' }} className="group-hover:text-brand transition-colors" />
+                <span className="text-[12px] flex-1 text-left" style={{ color: 'var(--t3)' }}>Search any stock or ticker…</span>
+                <kbd className="text-[9px] px-1.5 py-0.5 rounded hidden lg:inline" style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-default)', color: 'var(--t3)' }}>⌘K</kbd>
+              </button>
+              {/* Mobile search icon */}
+              <button onClick={() => { setSearchOpen(true); setTimeout(() => searchRef.current?.focus(), 50) }}
+                className="sm:hidden p-2 rounded-lg transition-all"
+                style={{ border: '1px solid var(--border-default)', background: 'var(--bg-card)', color: 'var(--t3)' }}>
+                <Search size={16} />
+              </button>
+            </>
           )}
 
-          {/* Right: Clock + Live + Theme + Auth */}
-          <div className="flex items-center gap-2.5 flex-shrink-0">
+          {/* Right: Clock + Theme + Auth */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
             <div className="hidden lg:flex flex-col items-end">
               <div className="num text-[14px] font-semibold leading-none" style={{ color: 'var(--t1)' }}>{time}</div>
               <div className="text-[8px] uppercase tracking-wider mt-0.5" style={{ color: 'var(--t3)' }}>{date} IST</div>
             </div>
-            {/* Theme toggle */}
             <ThemeToggle />
-
             {!isLoginPage && !isLandingPage && (
               user ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <span className="text-[11px] font-semibold hidden xl:inline" style={{ color: 'var(--brand)' }}>{user.username}</span>
                   <button onClick={logout} className="nav-item !px-2 !py-2" title="Sign out"><LogOut size={14} /></button>
                 </div>
               ) : (
-                <Link href="/login" className="btn btn-primary !py-2 !px-4 !text-[12px] gap-1.5">
-                  <User size={13} /> Sign In
+                <Link href="/login" className="btn btn-primary !py-1.5 !px-3 !text-[12px] gap-1.5">
+                  <User size={13} /><span className="hidden sm:inline">Sign In</span>
                 </Link>
               )
             )}

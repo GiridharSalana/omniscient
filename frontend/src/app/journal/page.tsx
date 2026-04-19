@@ -53,17 +53,17 @@ export default function JournalPage() {
   const effectiveShowForm = showForm
 
   return (
-    <div className="p-2 space-y-2 animate-fade-in">
+    <div className="p-3 space-y-3 animate-fade-in">
 
-      {/* ── Header — centered ───────────────────────────────── */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1" />
+      {/* ── Header ──────────────────────────────────────────── */}
+      <div className="grid items-center" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
+        <div />
         <div className="flex items-center gap-2">
           <BookOpen size={15} className="text-warn" />
           <h1 className="text-sm font-semibold text-text-primary uppercase tracking-wider">Trading Journal</h1>
           <span className="text-[11px] text-muted">· {entries.length} entries</span>
         </div>
-        <div className="flex-1 flex justify-end">
+        <div className="flex justify-end">
           <button onClick={() => setShowForm(v => !v)} className="btn btn-primary gap-1.5">
             {effectiveShowForm && entries.length > 0 ? <X size={12} /> : <Plus size={12} />}
             {effectiveShowForm && entries.length > 0 ? 'Cancel' : '+ Log Trade'}
@@ -77,23 +77,23 @@ export default function JournalPage() {
           {[
             {
               label: 'Net P&L',
-              value: `$${(stats.net_pnl ?? 0).toFixed(2)}`,
-              color: stats.closed_trades > 0 ? ((stats.net_pnl ?? 0) >= 0 ? '#00d68f' : '#ff4d6d') : '#4b5d73',
-              glow:  stats.closed_trades > 0 ? ((stats.net_pnl ?? 0) >= 0 ? 'rgba(0,214,143,0.15)' : 'rgba(255,77,109,0.15)') : 'transparent',
+              value: `₹${(stats.net_pnl ?? 0).toFixed(2)}`,
+              color: stats.closed_trades > 0 ? ((stats.net_pnl ?? 0) >= 0 ? 'var(--bull)' : 'var(--bear)') : 'var(--t3)',
+              glow:  stats.closed_trades > 0 ? ((stats.net_pnl ?? 0) >= 0 ? 'var(--bull-glow)' : 'var(--bear-glow)') : 'transparent',
             },
             {
               label: 'Win Rate',
               value: stats.closed_trades > 0 ? `${stats.win_rate ?? 0}%` : '—',
-              color: stats.closed_trades > 0 ? ((stats.win_rate ?? 0) >= 50 ? '#00d68f' : '#ff4d6d') : '#4b5d73',
+              color: stats.closed_trades > 0 ? ((stats.win_rate ?? 0) >= 50 ? 'var(--bull)' : 'var(--bear)') : 'var(--t3)',
               glow:  'transparent',
             },
-            { label: 'Closed',  value: String(stats.closed_trades ?? 0), color: '#e2e8f0', glow: 'transparent' },
-            { label: 'Emotion', value: stats.most_common_emotion ?? '—', color: '#fbbf24', glow: 'rgba(251,191,36,0.12)' },
+            { label: 'Closed',  value: String(stats.closed_trades ?? 0), color: 'var(--t1)', glow: 'transparent' },
+            { label: 'Emotion', value: stats.most_common_emotion ?? '—', color: 'var(--warn)', glow: 'rgba(251,191,36,0.12)' },
           ].map(({ label, value, color, glow }) => (
             <div key={label} className="rounded-xl text-center py-3 px-2"
-                 style={{ background: `linear-gradient(135deg,#0a1628,#060e1e)`, border: '1px solid #1a3050', boxShadow: glow !== 'transparent' ? `inset 0 0 20px ${glow}` : 'none' }}>
-              <div className="text-[9px] uppercase tracking-widest mb-1.5" style={{ color: '#4b5d73' }}>{label}</div>
-              <div className="text-[20px] font-bold num capitalize leading-none" style={{ color, textShadow: `0 0 16px ${color}60` }}>{value}</div>
+                 style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', boxShadow: glow !== 'transparent' ? `inset 0 0 20px ${glow}` : 'none' }}>
+              <div className="text-[9px] uppercase tracking-widest mb-1.5 text-muted">{label}</div>
+              <div className="text-[20px] font-bold num capitalize leading-none" style={{ color }}>{value}</div>
             </div>
           ))}
         </div>
@@ -102,14 +102,14 @@ export default function JournalPage() {
       {/* ── Empty state onboarding ──────────────────────────── */}
       {entries.length === 0 && !effectiveShowForm && (
         <div className="rounded-xl text-center py-12 space-y-4"
-             style={{ background: 'linear-gradient(135deg,#0a1628,#060e1e)', border: '1px solid #1a3050' }}>
+             style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)' }}>
           <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center"
                style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.25)' }}>
             <BookOpen size={26} style={{ color: '#fbbf24' }} />
           </div>
           <div>
-            <p className="text-white text-[15px] font-semibold">Start your trading journal</p>
-            <p className="text-[11px] mt-1.5 max-w-sm mx-auto leading-relaxed" style={{ color: '#4b5d73' }}>
+            <p className="text-[15px] font-semibold text-text-primary">Start your trading journal</p>
+            <p className="text-[11px] mt-1.5 max-w-sm mx-auto leading-relaxed text-text-secondary">
               Track every trade — entry, exit, emotion, rationale.<br />Get AI-powered reviews of your decisions.
             </p>
           </div>
@@ -207,7 +207,15 @@ export default function JournalPage() {
       {/* ── Journal entries — 3 equal columns for density ───── */}
       {entries.length > 0 && (
         <div className="grid grid-cols-3 gap-2">
-          {entries.map(entry => <JournalCard key={entry.id} entry={entry} onUpdate={() => mutate()} />)}
+          {entries.map((entry, idx) => {
+            const total = entries.length
+            const isOrphan = total % 3 === 1 && idx === total - 1
+            return (
+              <div key={entry.id} className={isOrphan ? 'col-start-2' : ''}>
+                <JournalCard entry={entry} onUpdate={() => mutate()} />
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

@@ -100,24 +100,30 @@ function MarketPulseBar({ snapshot }: { snapshot: MarketSnapshot | undefined }) 
   ]
   const findQ = (sym: string) => allQ.find(q => q.symbol === sym)
 
-  const EQUITY = [
-    { sym: '^NSEI',  label: 'Nifty 50', flag: '🇮🇳' },
-    { sym: '^BSESN', label: 'Sensex',   flag: '🇮🇳' },
-    { sym: '^GSPC',  label: 'S&P 500',  flag: '🇺🇸' },
-    { sym: '^IXIC',  label: 'Nasdaq',   flag: '🇺🇸' },
+  const INDIA = [
+    { sym: '^NSEI',    label: 'Nifty 50',  flag: '🇮🇳' },
+    { sym: '^NSEBANK', label: 'Bank Nifty', flag: '🇮🇳' },
+    { sym: '^BSESN',   label: 'Sensex',    flag: '🇮🇳' },
+  ]
+  const GLOBAL = [
+    { sym: '^GSPC', label: 'S&P 500', flag: '🇺🇸' },
+    { sym: '^IXIC', label: 'Nasdaq',  flag: '🇺🇸' },
   ]
   const HAVENS = [
-    { sym: '^VIX', label: 'VIX',  flag: '📊' },
-    { sym: 'GC=F', label: 'Gold', flag: '🥇' },
+    { sym: '^INDIAVIX', label: 'India VIX', flag: '📊' },
+    { sym: '^VIX',      label: 'US VIX',    flag: '📉' },
+    { sym: 'GC=F',      label: 'Gold',      flag: '🥇' },
   ]
 
-  const Sep = () => <div className="w-px h-8 flex-shrink-0 mx-5" style={{ background: 'var(--border-default)' }} />
+  const Sep = () => <div className="w-px h-8 flex-shrink-0" style={{ background: 'var(--border-default)' }} />
 
   return (
-    <div className="rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)' }}>
-      {/* 1fr auto 1fr grid: left equity group | sep | right haven group, all centred as a unit */}
-      <div className="flex items-center justify-center gap-5 px-6 py-3">
-        {EQUITY.map(i => <IndexPill key={i.sym} q={findQ(i.sym)} label={i.label} flag={i.flag} />)}
+    <div className="rounded-xl overflow-x-auto" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', scrollbarWidth: 'none' }}>
+      <div className="flex items-center justify-center gap-4 px-5 py-3 min-w-max mx-auto">
+        {INDIA.map(i => <IndexPill key={i.sym} q={findQ(i.sym)} label={i.label} flag={i.flag} />)}
+        <Sep />
+        {GLOBAL.map(i => <IndexPill key={i.sym} q={findQ(i.sym)} label={i.label} flag={i.flag} />)}
+        <Sep />
         {HAVENS.map(i => <IndexPill key={i.sym} q={findQ(i.sym)} label={i.label} flag={i.flag} />)}
       </div>
     </div>
@@ -314,7 +320,7 @@ function StatsBar({ data }: { data: OpportunitiesResponse }) {
     { label: 'Universe',        value: data.universe,      color: '#6b7c93', icon: Database   },
   ]
   return (
-    <div className="grid grid-cols-5 gap-2.5">
+    <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-5 gap-2">
       {items.map(({ label, value, color, icon: Icon }) => (
         <div key={label} className="rounded-xl px-4 py-3 flex flex-col items-center gap-1.5"
           style={{ background: `${color}08`, border: `1px solid ${color}25` }}>
@@ -471,10 +477,11 @@ export function OpportunityHub({ defaultRegion = 'all' }: Props) {
 
       {/* ── Content (full-width symmetric grid) ───────────────── */}
       {isLoading ? (
-        <div className={view === 'grid' ? 'grid grid-cols-3 gap-3' : 'flex flex-col gap-2'}>
+        <div className={view === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3' : 'flex flex-col gap-2'}>
           {[...Array(view === 'grid' ? 9 : 7)].map((_, i) => (
             <div key={i} className="skeleton rounded-xl"
-              style={{ height: view === 'grid' ? 380 : 64, animationDelay: `${i * 60}ms` }} />
+              style={{ height: view === 'grid' ? 380 : 64, animationDelay: `${i * 60}ms`,
+                       gridColumn: view === 'grid' && i === 8 ? '2' : undefined }} />
           ))}
         </div>
       ) : noData ? (
@@ -496,10 +503,17 @@ export function OpportunityHub({ defaultRegion = 'all' }: Props) {
           </button>
         </div>
       ) : view === 'grid' ? (
-        <div className="grid grid-cols-3 gap-3">
-          {filtered.map(item => (
-            <OpportunityCard key={item.symbol} item={item} view="card" />
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filtered.map((item, idx) => {
+            const total = filtered.length
+            // At lg (3-col): last card is orphan → center column. At sm (2-col): no orphan issue.
+            const isLgOrphan = total % 3 === 1 && idx === total - 1
+            return (
+              <div key={item.symbol} className={isLgOrphan ? 'lg:col-start-2' : ''}>
+                <OpportunityCard item={item} view="card" />
+              </div>
+            )
+          })}
         </div>
       ) : (
         <div className="rounded-xl overflow-hidden flex flex-col gap-0" style={{ border: '1px solid var(--border-default)' }}>

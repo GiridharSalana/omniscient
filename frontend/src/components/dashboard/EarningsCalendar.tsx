@@ -78,12 +78,12 @@ export function EarningsCalendar() {
                 <span className="text-[9px] font-bold text-brand uppercase tracking-wider">
                   {formatDate(date)}
                 </span>
-                <div className="flex-1 h-px bg-[#1a3050]" />
+                <div className="flex-1 h-px" style={{ background: 'var(--border-default)' }} />
                 <span className="text-[9px] text-muted">{events.length} co.</span>
               </div>
               <div className="space-y-px">
                 {events.slice(0, 5).map(e => (
-                  <div key={e.symbol} className="flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-[#0f1f38] transition-colors">
+                  <div key={e.symbol} className="flex items-center gap-1.5 px-1 py-0.5 rounded transition-colors" onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'} onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = ''}>
                     <TimeBadge time={e.time_of_day} />
                     <span className="text-[11px] font-bold text-text-primary w-12 flex-shrink-0">{e.symbol}</span>
                     <span className="text-[9px] text-muted flex-1 truncate">{e.company}</span>
@@ -99,7 +99,7 @@ export function EarningsCalendar() {
         </div>
       )}
       {/* Legend */}
-      <div className="flex items-center gap-3 mt-2 pt-1.5 border-t border-[#1a3050]">
+      <div className="flex items-center gap-3 mt-2 pt-1.5" style={{ borderTop: '1px solid var(--border-default)' }}>
         <span className="text-[8px] text-muted">BMO = Before Market Open</span>
         <span className="text-[8px] text-muted">AMC = After Market Close</span>
       </div>

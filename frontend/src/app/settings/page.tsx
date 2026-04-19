@@ -83,13 +83,13 @@ export default function SettingsPage() {
   return (
     <div className="p-4 max-w-3xl mx-auto space-y-4 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1" />
+      <div className="grid items-center" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
+        <div />
         <div className="flex items-center gap-2">
           <Settings size={16} className="text-brand" />
           <h1 className="text-sm font-semibold text-text-primary uppercase tracking-wider">Settings & Preferences</h1>
         </div>
-        <div className="flex-1 flex justify-end">
+        <div className="flex justify-end">
           <button onClick={save} disabled={saving} className="btn btn-primary gap-1.5">
             {saving ? <Loader2 size={12} className="animate-spin" /> : saved ? <Check size={12} /> : <Save size={12} />}
             {saved ? 'Saved!' : 'Save Changes'}
@@ -129,11 +129,11 @@ export default function SettingsPage() {
             <button key={opt.id} onClick={() => { setPrefs(p => ({ ...p, home_region: opt.id })); setSaved(false) }}
               className="py-2.5 px-3 rounded text-center transition-all"
               style={{
-                background: prefs.home_region === opt.id ? 'linear-gradient(135deg,#1e3a5f,#0f2744)' : 'rgba(15,31,56,0.5)',
-                border: `1px solid ${prefs.home_region === opt.id ? '#3b82f6' : '#1a2235'}`,
+                background: prefs.home_region === opt.id ? 'var(--bg-active)' : 'var(--bg-raised)',
+                border: `1px solid ${prefs.home_region === opt.id ? 'var(--brand)' : 'var(--border-default)'}`,
               }}>
               <div className="text-2xl mb-1">{opt.flag}</div>
-              <div className="text-[10px] font-medium" style={{ color: prefs.home_region === opt.id ? '#93c5fd' : '#64748b' }}>{opt.label}</div>
+              <div className="text-[10px] font-medium" style={{ color: prefs.home_region === opt.id ? 'var(--nav-active)' : 'var(--t3)' }}>{opt.label}</div>
             </button>
           ))}
         </div>
@@ -153,8 +153,8 @@ export default function SettingsPage() {
               <button key={opt.id} onClick={() => toggleMarket(opt.id)}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded transition-all"
                 style={{
-                  background: active ? 'rgba(59,130,246,0.08)' : 'rgba(15,31,56,0.3)',
-                  border: `1px solid ${active ? 'rgba(59,130,246,0.3)' : '#1a2235'}`,
+                  background: active ? 'var(--brand-dim)' : 'var(--bg-raised)',
+                  border: `1px solid ${active ? 'rgba(124,58,237,0.4)' : 'var(--border-default)'}`,
                 }}>
                 <div className="text-xl flex-shrink-0">{opt.flag}</div>
                 <div className="flex-1 text-left">
@@ -162,7 +162,7 @@ export default function SettingsPage() {
                   <div className="text-[10px] text-muted">{opt.desc}</div>
                 </div>
                 <div className={cn('w-4 h-4 rounded flex items-center justify-center flex-shrink-0',
-                  active ? 'bg-blue-500' : 'border border-[#1a2235]')}>
+                  active ? 'bg-brand' : 'border')} style={!active ? { borderColor: 'var(--border-default)' } : {}}>
                   {active && <Check size={10} className="text-white" />}
                 </div>
               </button>

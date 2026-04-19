@@ -13,7 +13,7 @@ function RsiBar({ rsi }: { rsi: number | null }) {
   const label = rsi <= 30 ? 'OS' : rsi >= 70 ? 'OB' : ''
   return (
     <div className="flex items-center gap-1.5 w-full">
-      <div className="flex-1 h-1 rounded-full bg-[#0f1f38] overflow-hidden">
+      <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'var(--bg-raised)' }}>
         <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
       </div>
       <span className="text-[10px] num font-semibold w-7 text-right" style={{ color }}>{rsi.toFixed(0)}</span>
@@ -30,7 +30,7 @@ function RangeBar({ pctFromLow }: { pctFromLow: number | null }) {
   const color = pos >= 80 ? '#00d68f' : pos <= 20 ? '#ff4d6d' : '#fbbf24'
   return (
     <div className="flex items-center gap-1.5 w-full">
-      <div className="flex-1 h-1 rounded-full bg-[#0f1f38] overflow-hidden">
+      <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'var(--bg-raised)' }}>
         <div className="h-full rounded-full" style={{ width: `${pos}%`, background: color }} />
       </div>
       <span className="text-[9px] text-muted num">+{pctFromLow.toFixed(0)}%</span>
@@ -74,8 +74,8 @@ export function TechnicalSignals() {
   if (isLoading) {
     return (
       <div className="card animate-pulse space-y-2">
-        <div className="h-2.5 w-32 rounded mx-auto" style={{ background: '#1a3050' }} />
-        {[1,2,3,4].map(i => <div key={i} className="h-5 rounded" style={{ background: '#1a3050' }} />)}
+        <div className="h-2.5 w-32 rounded mx-auto skeleton" />
+        {[1,2,3,4].map(i => <div key={i} className="h-5 rounded skeleton" />)}
       </div>
     )
   }
@@ -99,7 +99,8 @@ export function TechnicalSignals() {
         <span className="text-[9px] text-muted">RSI · MA · Range · Signal</span>
       </div>
 
-      <table className="w-full sym-table">
+      <div className="overflow-x-auto">
+      <table className="w-full sym-table min-w-[420px]">
         <thead>
           <tr>
             <th>Symbol</th>
@@ -132,6 +133,7 @@ export function TechnicalSignals() {
           ))}
         </tbody>
       </table>
+      </div>
 
       {/* Volume anomalies summary */}
       <VolumeAnomalyRow data={data} />
@@ -143,7 +145,7 @@ function VolumeAnomalyRow({ data }: { data: TechSignal[] }) {
   const highVol = data.filter(t => t.volume_signal === 'high')
   if (!highVol.length) return null
   return (
-    <div className="mt-2 pt-1.5 border-t border-[#1a3050]">
+    <div className="mt-2 pt-1.5" style={{ borderTop: '1px solid var(--border-default)' }}>
       <div className="flex items-center gap-1.5 flex-wrap">
         <span className="text-[9px] text-muted">⚡ High Volume:</span>
         {highVol.map(t => (

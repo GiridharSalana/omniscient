@@ -28,11 +28,12 @@ function VolumeAnomalyTable() {
 
       {isLoading ? (
         <div className="animate-pulse space-y-1">
-          {[1,2,3].map(i => <div key={i} className="h-5 rounded" style={{background:'#1a3050'}} />)}
+          {[1,2,3].map(i => <div key={i} className="h-5 rounded skeleton" />)}
         </div>
       ) : !data?.length ? (
         <p className="text-center text-muted text-[10px] py-4">No unusual volume detected in watchlist</p>
       ) : (
+        <div className="overflow-x-auto">
         <table className="sym-table w-full">
           <thead>
             <tr>
@@ -68,6 +69,7 @@ function VolumeAnomalyTable() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   )
@@ -77,16 +79,16 @@ export default function MacroPage() {
   const { data: macro } = useSWR<MacroSnapshot>('/api/v1/macro/snapshot', swrFetcher, { refreshInterval: 3_600_000 })
 
   return (
-    <div className="p-2 space-y-2 animate-fade-in">
+    <div className="p-3 space-y-3 animate-fade-in">
 
       {/* Page header */}
-      <div className="flex items-center gap-3 py-1 border-b border-[#1a3050]">
-        <div className="flex-1" />
+      <div className="grid items-center py-1" style={{ gridTemplateColumns: '1fr auto 1fr', borderBottom: '1px solid var(--border-default)' }}>
+        <div />
         <div className="flex items-center gap-2">
-          <AlertTriangle size={14} style={{color:'#818cf8'}} />
+          <AlertTriangle size={14} style={{ color: 'var(--brand)' }} />
           <h1 className="text-sm font-bold text-text-primary uppercase tracking-wider">Market Intelligence</h1>
         </div>
-        <div className="flex-1 flex justify-end">
+        <div className="flex justify-end">
           {macro && (
             <span className={cn('badge text-[10px]',
               macro.regime_signal === 'risk-on'  ? 'badge-bull' :
@@ -99,13 +101,13 @@ export default function MacroPage() {
       </div>
 
       {/* Row 1: Macro + Sector */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <MacroPanel />
         <SectorHeatMap />
       </div>
 
       {/* Row 2: Technical + Earnings */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <TechnicalSignals />
         <EarningsCalendar />
       </div>
