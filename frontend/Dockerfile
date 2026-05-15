@@ -13,7 +13,7 @@ RUN npm install
 
 COPY . .
 
-EXPOSE 3000
+EXPOSE 12345
 
 CMD ["npm", "run", "dev"]
 
@@ -40,6 +40,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
-EXPOSE 3000
+EXPOSE 12345
+
+ENV PORT=12345
 
 CMD ["node", "server.js"]
