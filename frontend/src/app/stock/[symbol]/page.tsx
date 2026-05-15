@@ -98,7 +98,7 @@ function CandlestickChart({ data, prediction }: { data: OHLCVBar[], prediction?:
       if (prediction?.forecast?.length) {
         const predLine = chart.addSeries(LineSeries, {
           color: '#a78bfa', lineWidth: 2, lineStyle: 2,
-          title: `Prophet ${prediction.forecast.length}d`,
+          title: `${prediction.model?.startsWith('TimesFM') ? 'TimesFM' : 'Prophet'} ${prediction.forecast.length}d`,
         })
         const lastHistDate = data[data.length - 1].date
         const histPoint = { time: lastHistDate as any, value: data[data.length - 1].close }
@@ -238,14 +238,16 @@ export default function StockPage() {
   const router     = useRouter()
   const sym        = symbol?.toUpperCase() ?? ''
 
-  const [profile,  setProfile]  = useState<Profile | null>(null)
-  const [history,  setHistory]  = useState<OHLCVBar[]>([])
-  const [news,     setNews]     = useState<NewsItem[]>([])
-  const [predict,  setPredict]  = useState<Prediction | null>(null)
-  const [tech,     setTech]     = useState<TechSnapshot | null>(null)
-  const [period,   setPeriod]   = useState<'3mo' | '6mo' | '1y' | '2y'>('1y')
-  const [loading,  setLoading]  = useState(true)
-  const [error,    setError]    = useState('')
+  const [profile,      setProfile]      = useState<Profile | null>(null)
+  const [history,      setHistory]      = useState<OHLCVBar[]>([])
+  const [news,         setNews]         = useState<NewsItem[]>([])
+  const [predict,      setPredict]      = useState<Prediction | null>(null)
+  const [tech,         setTech]         = useState<TechSnapshot | null>(null)
+  const [period,       setPeriod]       = useState<'3mo' | '6mo' | '1y' | '2y'>('1y')
+  const [forecastModel, setForecastModel] = useState<'prophet' | 'timesfm'>('prophet')
+  const [forecastLoading, setForecastLoading] = useState(false)
+  const [loading,      setLoading]      = useState(true)
+  const [error,        setError]        = useState('')
 
   useEffect(() => {
     if (!sym) return
@@ -256,7 +258,7 @@ export default function StockPage() {
       api.stock.history(sym, '1y').catch(() => []),
       api.stock.news(sym, 30).catch(() => []),
       api.stock.technical(sym).catch(() => null),
-      api.stock.predict(sym, 30).catch(() => null),
+      api.stock.predict(sym, 30, forecastModel).catch(() => null),
     ]).then(([p, h, n, t, pred]) => {
       setProfile(p as Profile | null)
       setHistory(h as OHLCVBar[])
@@ -266,6 +268,16 @@ export default function StockPage() {
       if (!p) setError('Symbol not found or no data available')
     }).finally(() => setLoading(false))
   }, [sym])
+
+  // Re-fetch forecast when model changes
+  useEffect(() => {
+    if (!sym || loading) return
+    setForecastLoading(true)
+    api.stock.predict(sym, 30, forecastModel)
+      .then(pred => setPredict(pred as Prediction | null))
+      .catch(() => setPredict(null))
+      .finally(() => setForecastLoading(false))
+  }, [forecastModel])
 
   // Re-fetch history on period change
   useEffect(() => {
@@ -354,9 +366,24 @@ export default function StockPage() {
           <div className="section-header justify-center m-0">
             <BarChart2 size={12} className="text-brand" />
             <span className="section-title">Price History</span>
-            {predict && <span className="text-[10px] text-brand ml-1">+ Prophet Forecast</span>}
+            {predict && <span className="text-[10px] text-brand ml-1">+ Forecast</span>}
           </div>
-          <div className="flex gap-1 justify-end">
+          <div className="flex gap-1 justify-end items-center">
+            {/* Forecast model toggle */}
+            <div className="flex rounded overflow-hidden border border-[#1a2235] mr-2">
+              {(['prophet', 'timesfm'] as const).map(m => (
+                <button key={m} onClick={() => setForecastModel(m)}
+                  disabled={forecastLoading}
+                  className="text-[9px] px-2 py-0.5 transition-colors"
+                  style={{
+                    background: forecastModel === m ? '#1e3a5f' : 'transparent',
+                    color: forecastModel === m ? '#93c5fd' : '#4a5578',
+                    opacity: forecastLoading ? 0.5 : 1,
+                  }}>
+                  {m === 'timesfm' ? 'TimesFM' : 'Prophet'}
+                </button>
+              ))}
+            </div>
             {(['3mo','6mo','1y','2y'] as const).map(p => (
               <button key={p} onClick={() => setPeriod(p)}
                 className="text-[10px] px-2 py-0.5 rounded transition-colors"
@@ -382,7 +409,9 @@ export default function StockPage() {
             <div className="section-header justify-center">
               <Brain size={12} className="text-brand" />
               <span className="section-title">ML Price Prediction</span>
-              <span className="text-[9px] text-muted ml-1">30 days</span>
+              <span className="text-[9px] text-muted ml-1">
+                {forecastModel === 'timesfm' ? 'TimesFM · 30d' : 'Prophet · 30d'}
+              </span>
             </div>
             <PredictionWidget pred={predict} />
           </div>

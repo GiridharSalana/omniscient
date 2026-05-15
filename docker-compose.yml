@@ -5,14 +5,50 @@ networks:
 volumes:
   postgres_data:
   redis_data:
+  omniscient_data:   # used by the single-container profile
 
 services:
+  # ─────────────────────────────────────────────────────────────────
+  # ALL-IN-ONE (single container — profile: single)
+  #
+  #   docker compose --profile single up -d
+  #   docker ps   → one entry: omniscient
+  #
+  # ─────────────────────────────────────────────────────────────────
+  omniscient:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: oms:latest
+    container_name: oms
+    profiles: [single]
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-omniscient_secret}
+    ports:
+      - "3000:3000"
+      - "8000:8000"
+    volumes:
+      - omniscient_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ─────────────────────────────────────────────────────────────────
+  # MULTI-SERVICE (default — no profile needed)
+  # ─────────────────────────────────────────────────────────────────
+
   # ─────────────────────────────────────────────────────────────────
   # PostgreSQL 15 + pgvector
   # ─────────────────────────────────────────────────────────────────
   postgres:
     image: pgvector/pgvector:pg15
     container_name: omniscient-postgres
+    profiles: [multi]
     restart: unless-stopped
     environment:
       POSTGRES_DB: omniscient
@@ -39,6 +75,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: omniscient-redis
+    profiles: [multi]
     restart: unless-stopped
     command: redis-server --save 60 1 --loglevel warning --maxmemory 512mb --maxmemory-policy allkeys-lru
     volumes:
@@ -61,6 +98,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: omniscient-backend
+    profiles: [multi]
     restart: unless-stopped
     env_file: .env
     environment:
@@ -93,6 +131,7 @@ services:
       context: ./scheduler
       dockerfile: Dockerfile
     container_name: omniscient-scheduler
+    profiles: [multi]
     restart: unless-stopped
     env_file: .env
     environment:
@@ -116,6 +155,7 @@ services:
       dockerfile: Dockerfile
       target: production
     container_name: omniscient-frontend
+    profiles: [multi]
     restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000

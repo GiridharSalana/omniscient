@@ -1,5 +1,5 @@
 """
-ML Price Prediction Router — Prophet time-series forecasting.
+ML Price Prediction Router — Prophet and TimesFM time-series forecasting.
 Provides 30-day price forecasts with confidence intervals.
 """
 from __future__ import annotations
@@ -7,7 +7,7 @@ from __future__ import annotations
 import json
 import logging
 from datetime import date, timedelta
-from typing import Optional
+from typing import Literal, Optional
 
 import httpx
 import numpy as np
@@ -26,6 +26,29 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 CACHE_TTL_PREDICT = 21600  # 6 hours
+
+# Lazy singleton for TimesFM — loaded once on first request to avoid per-request overhead
+_timesfm_model = None
+
+def _get_timesfm():
+    global _timesfm_model
+    if _timesfm_model is not None:
+        return _timesfm_model
+    try:
+        import timesfm
+        _timesfm_model = timesfm.TimesFm(
+            hparams=timesfm.TimesFmHparams(
+                backend="cpu",
+                per_core_batch_size=32,
+                horizon_len=128,
+            ),
+            checkpoint=timesfm.TimesFmCheckpoint(
+                huggingface_repo_id="google/timesfm-1.0-200m-pytorch",
+            ),
+        )
+        return _timesfm_model
+    except Exception as e:
+        raise RuntimeError(f"TimesFM failed to load: {e}")
 
 
 # ── Schemas ──────────────────────────────────────────────────────
@@ -95,14 +118,15 @@ def _normalise(series: list[float]) -> list[float]:
 async def predict_price(
     symbol:  str,
     days:    int = 30,
+    model:   Literal["prophet", "timesfm"] = "prophet",
     redis = Depends(get_redis),
 ):
     """
-    Prophet 30-day price forecast with RSI and MACD as additional regressors.
-    Cached for 6 hours per symbol.
+    Price forecast using Prophet (default) or Google's TimesFM foundation model.
+    Cached for 6 hours per symbol+model combination.
     """
     sym       = symbol.upper()
-    cache_key = f"predict:{sym}:{days}"
+    cache_key = f"predict:{sym}:{days}:{model}"
     cached    = await redis.get(cache_key)
     if cached:
         return PredictionResult(**json.loads(cached))
@@ -140,6 +164,12 @@ async def predict_price(
 
     closes = df["y"].tolist()
     current_price = closes[-1]
+
+    # ── TimesFM branch ───────────────────────────────────────────
+    if model == "timesfm":
+        result = _timesfm_forecast(sym, closes, current_price, days)
+        await redis.setex(cache_key, CACHE_TTL_PREDICT, result.model_dump_json())
+        return result
 
     # ── Feature engineering ──────────────────────────────────────
     rsi_raw  = _calc_rsi(closes)
@@ -228,6 +258,69 @@ async def predict_price(
     )
     await redis.setex(cache_key, CACHE_TTL_PREDICT, result.model_dump_json())
     return result
+
+
+def _timesfm_forecast(sym: str, closes: list[float], current: float, days: int) -> PredictionResult:
+    """
+    Zero-shot forecast using Google's TimesFM 200M foundation model.
+    Uses the last 512 days as context. Quantile outputs provide confidence intervals.
+    """
+    try:
+        tfm = _get_timesfm()
+    except RuntimeError as e:
+        logger.error("TimesFM unavailable: %s", e)
+        return _linear_fallback(sym, closes, current, days)
+
+    # TimesFM accepts up to 512 context points
+    context = np.array(closes[-512:], dtype=np.float32)
+
+    try:
+        # freq=1 → daily/medium-frequency data
+        point_forecast, quantile_forecast = tfm.forecast(
+            inputs=[context],
+            freq=[1],
+        )
+        # Shapes: (1, horizon_len) and (1, horizon_len, 9)
+        # Quantile levels: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+        pf = point_forecast[0, :days]      # (days,)
+        qf = quantile_forecast[0, :days]   # (days, 9)
+
+        target = float(pf[-1])
+        lower  = float(qf[:, 0].min())   # 10th pct — worst case over horizon
+        upper  = float(qf[:, 8].max())   # 90th pct — best case over horizon
+
+        # Per-day lower/upper from 20th and 80th for tighter interval in chart
+        points = [
+            ForecastPoint(
+                date=str(date.today() + timedelta(days=i + 1)),
+                predicted=round(float(pf[i]), 2),
+                lower=round(float(qf[i, 1]), 2),   # 20th pct
+                upper=round(float(qf[i, 7]), 2),   # 80th pct
+            )
+            for i in range(len(pf))
+        ]
+
+    except Exception as e:
+        logger.error("TimesFM inference error for %s: %s", sym, e)
+        return _linear_fallback(sym, closes, current, days)
+
+    pct_change = (target - current) / (current + 1e-10)
+    band_width_pct = (upper - lower) / (current + 1e-10)
+    confidence = max(0.3, min(0.95, 1.0 - band_width_pct * 2))
+
+    return PredictionResult(
+        symbol=sym,
+        current_price=round(current, 2),
+        target_price=round(target, 2),
+        lower_bound=round(lower, 2),
+        upper_bound=round(upper, 2),
+        trend="up" if pct_change > 0.02 else ("down" if pct_change < -0.02 else "sideways"),
+        signal="buy" if pct_change > 0.03 else ("sell" if pct_change < -0.03 else "hold"),
+        confidence=round(confidence, 2),
+        forecast=points,
+        model="TimesFM 1.0 200M (Google)",
+        note="ML predictions are probabilistic — use as one input among many",
+    )
 
 
 def _linear_fallback(sym: str, closes: list[float], current: float, days: int) -> PredictionResult:

@@ -100,7 +100,7 @@ export const api = {
     history:          (sym: string, period = '1y', interval = '1d') => fetcher(`/api/v1/stock/${sym}/history?period=${period}&interval=${interval}`),
     news:             (sym: string, days = 30) => fetcher(`/api/v1/stock/${sym}/news?days=${days}`),
     technical:        (sym: string) => fetcher(`/api/v1/stock/${sym}/technical`),
-    predict:          (sym: string, days = 30) => fetcher(`/api/v1/stock/${sym}/predict?days=${days}`),
+    predict:          (sym: string, days = 30, model: 'prophet' | 'timesfm' = 'prophet') => fetcher(`/api/v1/stock/${sym}/predict?days=${days}&model=${model}`),
   },
   screener: {
     presets:        () => fetcher('/api/v1/screener/presets'),
